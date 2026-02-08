@@ -1,5 +1,5 @@
-const supabaseUrl = "https://lrndhbrxzrqcoltbqzjs.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxybmRoYnJ4enJxY29sdGJxempzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMDI3MjYsImV4cCI6MjA4NTY3ODcyNn0.71W4hvrf8P17b80PHjdrTfSVhFB8KEsmOS9vycIBl7E";
+const supabaseUrl = "https://sjkaymmawesdmxblpqlc.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqa2F5bW1hd2VzZG14YmxwcWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MzY2NDIsImV4cCI6MjA4NDUxMjY0Mn0.fKOLvHOhh7vBsXGweQhvW7Nersz9oFeHR5fQoC6jbfU";
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 async function loadPackages() {
