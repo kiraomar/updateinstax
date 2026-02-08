@@ -3,15 +3,19 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 async function loadPackages() {
-  const { data } = await supabase
+  const { data: packages, error: pkgError } = await supabase
     .from("packages")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .select("*");
+
+  console.log("Packages:", packages);
+  console.log("Package Error:", pkgError);
 
   const container = document.getElementById("packages");
+  container.innerHTML = "";
 
-  data.forEach(pkg => {
+  if (!packages) return;
+
+  packages.forEach(pkg => {
     const btn = document.createElement("button");
     btn.innerText = pkg.name;
     btn.onclick = () => loadChannels(pkg.id);
@@ -20,24 +24,28 @@ async function loadPackages() {
 }
 
 async function loadChannels(packageId) {
-  const { data } = await supabase
+  const { data: channels, error: chError } = await supabase
     .from("channels")
     .select("*")
-    .eq("package_id", packageId)
-    .order("sort_order", { ascending: true });
+    .eq("package_id", packageId);
+
+  console.log("Channels:", channels);
+  console.log("Channels Error:", chError);
 
   const container = document.getElementById("channels");
   container.innerHTML = "";
 
-  data.forEach(channel => {
+  if (!channels) return;
+
+  channels.forEach(channel => {
     const btn = document.createElement("button");
     btn.innerText = channel.name;
     btn.onclick = () => playStream(channel.stream_url);
     container.appendChild(btn);
   });
 
-  if (data.length > 0) {
-    playStream(data[0].stream_url);
+  if (channels.length > 0) {
+    playStream(channels[0].stream_url);
   }
 }
 
