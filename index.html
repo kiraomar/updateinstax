@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Live TV</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 <style>
 body{margin:0;background:#0f0f0f;color:white;font-family:Arial;}
 header{padding:15px;text-align:center;background:#1a1a1a;font-size:20px;font-weight:bold;}
@@ -22,7 +19,6 @@ button{padding:6px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer;
 .quality-btn{background:#2d2d2d;color:white;}
 </style>
 </head>
-
 <body>
 
 <header id="title">الباقات</header>
@@ -34,72 +30,80 @@ button{padding:6px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer;
 </div>
 
 <script>
-const supabaseUrl = "https://sjkaymmawesdmxblpqlc.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZG14YmxwcWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MzY2NDIsImV4cCI6MjA4NDUxMjY0Mn0.fKOLvHOhh7vBsXGweQhvW7Nersz9oFeHR5fQoC6jbfU";
-
-const { createClient } = supabase;
-const client = createClient(supabaseUrl, supabaseKey);
+// بيانات الباقات والقنوات محفوظة محلياً داخل JSON
+const packages = [
+  {
+    id: "1",
+    name: "Alwan Sports",
+    logo_url: "https://lo1.in/fwc/ALWANS.png",
+    channels: [
+      {
+        name: "beIN Sports 1",
+        logo_url: "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS1_DIGITAL_Mono.png",
+        stream_url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8",
+        sources: [
+          { url: "https://stream.supertv.gg:3001/sport/ch1/ch1_1080.m3u8", name: "FHD" },
+          { url: "https://stream.supertv.gg:3001/supertv/sport/stv1/ch1/ch1_720.m3u8", name: "HD" },
+          { url: "https://stream.supertv.gg:3001/supertv/sport/stv1/ch1/ch1_360.m3u8", name: "SD" }
+        ]
+      },
+      {
+        name: "beIN Sports 2",
+        logo_url: "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS2_DIGITAL_Mono.png",
+        stream_url: "https://stream.supertv.gg:3002/supertv/sport/stv2/adaptive.m3u8",
+        sources: []
+      }
+    ]
+  },
+  {
+    id: "2",
+    name: "Alwan Movies",
+    logo_url: "https://lo1.in/fwc/MOVIES.png",
+    channels: [
+      {
+        name: "Movie Channel 1",
+        logo_url: "",
+        stream_url: "https://example.com/movies1.m3u8",
+        sources: []
+      }
+    ]
+  }
+];
 
 let currentHls;
 
 // تحميل الباقات
-async function loadPackages(){
+function loadPackages(){
   document.getElementById("title").innerText = "الباقات";
   document.getElementById("player-section").style.display = "none";
   document.getElementById("content").innerHTML = "";
 
-  const { data, error } = await client.from("packages").select("*").order("sort_order",{ascending:true});
-  console.log("Packages Data:", data, "Error:", error);
-
-  if(error){
-    alert("حدث خطأ عند جلب الباقات. افتح Console لرؤية التفاصيل.");
-    return;
-  }
-
-  if(!data || data.length===0){
-    document.getElementById("content").innerHTML = "<p>لا توجد باقات</p>";
-    return;
-  }
-
-  data.forEach(pkg=>{
+  packages.forEach(pkg=>{
     const div=document.createElement("div");
     div.className="card";
     div.innerHTML=`
       <img src="${pkg.logo_url || ''}">
       <div>${pkg.name}</div>
     `;
-    div.onclick=()=>loadChannels(pkg.id,pkg.name);
+    div.onclick=()=>loadChannels(pkg);
     document.getElementById("content").appendChild(div);
   });
 }
 
-// تحميل القنوات حسب الباقة
-async function loadChannels(packageId, packageName){
+// تحميل القنوات
+function loadChannels(pkg){
   document.getElementById("title").innerHTML = `
     <button class="back-btn" onclick="loadPackages()">رجوع</button>
-    ${packageName}
+    ${pkg.name}
   `;
   document.getElementById("content").innerHTML = "";
 
-  const { data, error } = await client
-    .from("channels")
-    .select("*")
-    .eq("package_id",packageId)
-    .order("sort_order",{ascending:true});
-
-  console.log("Channels Data for", packageName, ":", data, "Error:", error);
-
-  if(error){
-    alert("حدث خطأ عند جلب القنوات. افتح Console لرؤية التفاصيل.");
+  if(!pkg.channels || pkg.channels.length===0){
+    document.getElementById("content").innerHTML="<p>لا توجد قنوات في هذه الباقة</p>";
     return;
   }
 
-  if(!data || data.length===0){
-    document.getElementById("content").innerHTML = "<p>لا توجد قنوات في هذه الباقة</p>";
-    return;
-  }
-
-  data.forEach(channel=>{
+  pkg.channels.forEach(channel=>{
     const div=document.createElement("div");
     div.className="card";
     div.innerHTML=`
@@ -113,7 +117,6 @@ async function loadChannels(packageId, packageName){
 
 // تشغيل القناة
 function playChannel(channel){
-  console.log("تشغيل القناة:", channel.name, channel.stream_url);
   document.getElementById("player-section").style.display="block";
   const video=document.getElementById("video");
   const qualitiesDiv=document.getElementById("qualities");
@@ -140,7 +143,6 @@ function playChannel(channel){
 
 function startStream(url){
   const video=document.getElementById("video");
-
   if(Hls.isSupported()){
     currentHls=new Hls();
     currentHls.loadSource(url);
