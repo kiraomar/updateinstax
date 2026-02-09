@@ -42,14 +42,15 @@ const client = createClient(supabaseUrl, supabaseKey);
 
 let currentHls;
 
-// تحميل الباقات
+// تحميل كل الباقات بدون شرط
 async function loadPackages(){
   document.getElementById("title").innerText = "الباقات";
   document.getElementById("player-section").style.display = "none";
   document.getElementById("content").innerHTML = "";
 
   const { data, error } = await client.from("packages").select("*").order("sort_order",{ascending:true});
-  console.log("Packages Data:", data, "Error:", error);
+
+  console.log("Packages Data:", data, "Error:", error); // 👈 هنا تشوف البيانات
 
   if(error){
     alert("حدث خطأ عند جلب الباقات. افتح Console لرؤية التفاصيل.");
@@ -113,7 +114,6 @@ async function loadChannels(packageId, packageName){
 
 // تشغيل القناة
 function playChannel(channel){
-  console.log("تشغيل القناة:", channel.name, channel.stream_url);
   document.getElementById("player-section").style.display="block";
   const video=document.getElementById("video");
   const qualitiesDiv=document.getElementById("qualities");
