@@ -1,51 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-  <title>Live TV</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live TV</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+body{
+  margin:0;
+  background:#0f0f0f;
+  color:white;
+  font-family:Arial;
+}
+
+header{
+  padding:15px;
+  text-align:center;
+  background:#1a1a1a;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:15px;
+  padding:15px;
+}
+
+.card{
+  background:#1c1c1c;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.card:hover{
+  background:#2a2a2a;
+}
+
+.card img{
+  width:100%;
+  height:80px;
+  object-fit:contain;
+  margin-bottom:8px;
+}
+
+video{
+  width:100%;
+  max-height:500px;
+  background:black;
+}
+
+#player-section{
+  display:none;
+  padding:10px;
+}
+
+button{
+  padding:6px 12px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.back-btn{
+  background:#444;
+  color:white;
+}
+.quality-btn{
+  background:#2d2d2d;
+  color:white;
+}
+</style>
 </head>
+
 <body>
 
-<h1>القنوات المباشرة</h1>
-<div id="channels"></div>
+<header id="title">الباقات</header>
 
-<video id="video" controls width="600"></video>
+<div id="content" class="grid"></div>
+
+<div id="player-section">
+  <video id="video" controls></video>
+  <div id="qualities"></div>
+</div>
 
 <script>
-const supabase = supabase.createClient(
-  "YOUR_SUPABASE_URL",
-  "YOUR_PUBLIC_ANON_KEY"
-);
+const supabaseUrl = "PUT_YOUR_SUPABASE_URL";
+const supabaseKey = "PUT_YOUR_PUBLIC_ANON_KEY";
 
-async function loadChannels() {
-  const { data } = await supabase
-    .from('channels')
-    .select('*');
+const { createClient } = supabase;
+const client = createClient(supabaseUrl, supabaseKey);
 
-  const container = document.getElementById("channels");
+let currentHls;
 
-  data.forEach(channel => {
-    const btn = document.createElement("button");
-    btn.innerText = channel.name;
-    btn.onclick = () => playChannel(channel.url);
-    container.appendChild(btn);
+// تحميل الباقات
+async function loadPackages(){
+  document.getElementById("title").innerText = "الباقات";
+  document.getElementById("player-section").style.display = "none";
+  document.getElementById("content").innerHTML = "";
+
+  const { data } = await client
+    .from("packages")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order",{ascending:true});
+
+  data.forEach(pkg=>{
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <img src="${pkg.logo_url || ''}">
+      <div>${pkg.name}</div>
+    `;
+    div.onclick=()=>loadChannels(pkg.id,pkg.name);
+    document.getElementById("content").appendChild(div);
   });
 }
 
-function playChannel(url) {
-  const video = document.getElementById("video");
+// تحميل القنوات
+async function loadChannels(packageId, packageName){
+  document.getElementById("title").innerHTML = `
+    <button class="back-btn" onclick="loadPackages()">رجوع</button>
+    ${packageName}
+  `;
+  document.getElementById("content").innerHTML = "";
 
-  if (Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(video);
-  } else {
-    video.src = url;
+  const { data } = await client
+    .from("channels")
+    .select("*")
+    .eq("package_id",packageId)
+    .order("sort_order",{ascending:true});
+
+  data.forEach(channel=>{
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <img src="${channel.logo_url || ''}">
+      <div>${channel.name}</div>
+    `;
+    div.onclick=()=>playChannel(channel);
+    document.getElementById("content").appendChild(div);
+  });
+}
+
+// تشغيل القناة
+function playChannel(channel){
+  document.getElementById("player-section").style.display="block";
+  const video=document.getElementById("video");
+  const qualitiesDiv=document.getElementById("qualities");
+  qualitiesDiv.innerHTML="";
+
+  if(currentHls){
+    currentHls.destroy();
+  }
+
+  startStream(channel.stream_url);
+
+  if(channel.sources && channel.sources.length>0){
+    channel.sources.forEach(source=>{
+      const btn=document.createElement("button");
+      btn.className="quality-btn";
+      btn.innerText=source.name;
+      btn.onclick=()=>startStream(source.url);
+      qualitiesDiv.appendChild(btn);
+    });
+  }
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function startStream(url){
+  const video=document.getElementById("video");
+
+  if(Hls.isSupported()){
+    currentHls=new Hls();
+    currentHls.loadSource(url);
+    currentHls.attachMedia(video);
+  }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+    video.src=url;
+  }else{
+    alert("المتصفح لا يدعم البث");
   }
 }
 
-loadChannels();
+loadPackages();
 </script>
 
 </body>
