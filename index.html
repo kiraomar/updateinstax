@@ -9,81 +9,23 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-body{
-  margin:0;
-  background:#0f0f0f;
-  color:white;
-  font-family:Arial;
-}
-
-header{
-  padding:15px;
-  text-align:center;
-  background:#1a1a1a;
-  font-size:20px;
-  font-weight:bold;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-.card{
-  background:#1c1c1c;
-  border-radius:12px;
-  padding:10px;
-  text-align:center;
-  cursor:pointer;
-  transition:.3s;
-}
-
-.card:hover{
-  background:#2a2a2a;
-}
-
-.card img{
-  width:100%;
-  height:80px;
-  object-fit:contain;
-  margin-bottom:8px;
-}
-
-video{
-  width:100%;
-  max-height:500px;
-  background:black;
-}
-
-#player-section{
-  display:none;
-  padding:10px;
-}
-
-button{
-  padding:6px 12px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.back-btn{
-  background:#444;
-  color:white;
-}
-.quality-btn{
-  background:#2d2d2d;
-  color:white;
-}
+body{margin:0;background:#0f0f0f;color:white;font-family:Arial;}
+header{padding:15px;text-align:center;background:#1a1a1a;font-size:20px;font-weight:bold;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:15px;padding:15px;}
+.card{background:#1c1c1c;border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:.3s;}
+.card:hover{background:#2a2a2a;}
+.card img{width:100%;height:80px;object-fit:contain;margin-bottom:8px;}
+video{width:100%;max-height:500px;background:black;}
+#player-section{display:none;padding:10px;}
+button{padding:6px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer;}
+.back-btn{background:#444;color:white;}
+.quality-btn{background:#2d2d2d;color:white;}
 </style>
 </head>
 
 <body>
 
 <header id="title">الباقات</header>
-
 <div id="content" class="grid"></div>
 
 <div id="player-section">
@@ -93,24 +35,32 @@ button{
 
 <script>
 const supabaseUrl = "https://sjkaymmawesdmxblpqlc.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqa2F5bW1hd2VzZG14YmxwcWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MzY2NDIsImV4cCI6MjA4NDUxMjY0Mn0.fKOLvHOhh7vBsXGweQhvW7Nersz9oFeHR5fQoC6jbfU";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZG14YmxwcWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MzY2NDIsImV4cCI6MjA4NDUxMjY0Mn0.fKOLvHOhh7vBsXGweQhvW7Nersz9oFeHR5fQoC6jbfU";
 
 const { createClient } = supabase;
 const client = createClient(supabaseUrl, supabaseKey);
 
 let currentHls;
 
-// تحميل الباقات
+// تحميل كل الباقات بدون شرط
 async function loadPackages(){
   document.getElementById("title").innerText = "الباقات";
   document.getElementById("player-section").style.display = "none";
   document.getElementById("content").innerHTML = "";
 
-  const { data } = await client
-    .from("packages")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order",{ascending:true});
+  const { data, error } = await client.from("packages").select("*").order("sort_order",{ascending:true});
+
+  console.log("Packages Data:", data, "Error:", error); // 👈 هنا تشوف البيانات
+
+  if(error){
+    alert("حدث خطأ عند جلب الباقات. افتح Console لرؤية التفاصيل.");
+    return;
+  }
+
+  if(!data || data.length===0){
+    document.getElementById("content").innerHTML = "<p>لا توجد باقات</p>";
+    return;
+  }
 
   data.forEach(pkg=>{
     const div=document.createElement("div");
@@ -124,7 +74,7 @@ async function loadPackages(){
   });
 }
 
-// تحميل القنوات
+// تحميل القنوات حسب الباقة
 async function loadChannels(packageId, packageName){
   document.getElementById("title").innerHTML = `
     <button class="back-btn" onclick="loadPackages()">رجوع</button>
@@ -132,11 +82,23 @@ async function loadChannels(packageId, packageName){
   `;
   document.getElementById("content").innerHTML = "";
 
-  const { data } = await client
+  const { data, error } = await client
     .from("channels")
     .select("*")
     .eq("package_id",packageId)
     .order("sort_order",{ascending:true});
+
+  console.log("Channels Data for", packageName, ":", data, "Error:", error);
+
+  if(error){
+    alert("حدث خطأ عند جلب القنوات. افتح Console لرؤية التفاصيل.");
+    return;
+  }
+
+  if(!data || data.length===0){
+    document.getElementById("content").innerHTML = "<p>لا توجد قنوات في هذه الباقة</p>";
+    return;
+  }
 
   data.forEach(channel=>{
     const div=document.createElement("div");
