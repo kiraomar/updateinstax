@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>beIN CONNECT - Live Stream</title>
-    <!-- مكتبة تشغيل HLS لروابط m3u8 -->
+    <!-- مكتبة تشغيل HLS -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- خطوط وأيقونات -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
 
     <style>
         :root {
-            --primary: #8a2be2; /* بنفسجي بي إن */
-            --bg: #141414; /* خلفية داكنة */
+            --primary: #8a2be2;
+            --bg: #141414;
             --card-bg: #2f2f2f;
             --text: #fff;
         }
@@ -22,7 +22,6 @@
         
         body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
 
-        /* الهيدر */
         header {
             position: fixed; top: 0; width: 100%; padding: 20px 4%;
             background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
@@ -31,10 +30,9 @@
         .logo { font-size: 28px; font-weight: 900; color: #fff; }
         .logo span { color: var(--primary); }
 
-        /* منطقة الهيرو */
         .hero {
             height: 70vh;
-            background: url('https://images.unsplash.com/photo-1522778119026-d647f0565c6a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover;
+            background: url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover;
             position: relative; display: flex; align-items: center; padding: 0 4%;
         }
         .hero::after {
@@ -52,7 +50,6 @@
         .btn-play { background: #fff; color: #000; }
         .btn-play:hover { transform: scale(1.05); }
 
-        /* شبكة القنوات */
         .section-title { margin: 20px 4%; font-size: 1.5rem; font-weight: 700; color: #e5e5e5; }
         .grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -65,12 +62,9 @@
             transition: transform 0.3s, z-index 0.3s;
         }
         .card:hover { transform: scale(1.1); z-index: 50; box-shadow: 0 0 20px rgba(138, 43, 226, 0.4); }
-        
-        .card.disabled { opacity: 0.5; cursor: not-allowed; } /* ستايل للقنوات الفارغة */
-
+        .card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
         .card-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 8px; }
         .card-name { font-weight: 700; text-transform: uppercase; font-size: 1.1rem; }
-        
         .live-badge {
             position: absolute; top: 10px; right: 10px; background: red; color: #fff;
             padding: 2px 6px; font-size: 0.7rem; font-weight: bold; border-radius: 2px;
@@ -78,7 +72,7 @@
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* مشغل الفيديو (Overlay) */
+        /* مشغل الفيديو */
         .overlay {
             position: fixed; inset: 0; background: #000; z-index: 2000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -99,7 +93,6 @@
         }
         .close-btn:hover { background: rgba(255,255,255,0.2); }
 
-        /* رسائل الحالة داخل المشغل */
         .status-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: white; font-size: 1.2rem; background: rgba(0,0,0,0.8);
@@ -107,17 +100,14 @@
         }
         .status-icon { font-size: 3rem; margin-bottom: 10px; display: block; color: var(--primary); }
 
-        /* تحكمات المشغل */
         .controls {
             position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
             display: flex; align-items: center; gap: 15px; opacity: 0; transition: 0.3s;
         }
         .video-container:hover .controls { opacity: 1; }
-        
         .ctrl-btn { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
         .ctrl-btn:hover { color: var(--primary); }
-        
         .progress-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary); width: 100%; }
 
@@ -133,7 +123,6 @@
         <div class="hero-content">
             <h1>البث المباشر - القناة الرئيسية</h1>
             <p style="color:#ccc; margin-bottom: 20px; font-size: 1.2rem;">تابع أهم المباريات بجودة عالية على beIN Sports 1.</p>
-            <!-- زر التشغيل السريع للقناة الأولى -->
             <button class="btn btn-play" onclick="playChannel(0)">
                 <i class="fas fa-play"></i> تشغيل القناة 1
             </button>
@@ -143,20 +132,17 @@
     <div class="section-title">قائمة القنوات</div>
     <div class="grid" id="channelsGrid"></div>
 
-    <!-- واجهة المشغل -->
     <div class="overlay" id="overlay">
         <div class="close-btn" onclick="closePlayer()"><i class="fas fa-times"></i></div>
         
         <div class="video-container">
             <video id="mainVideo" playsinline></video>
             
-            <!-- رسالة التحميل أو الخطأ أو عدم التوفر -->
             <div class="status-msg" id="statusMsg">
                 <i class="fas fa-circle-notch fa-spin status-icon"></i>
                 <span id="msgText">جاري التحميل...</span>
             </div>
 
-            <!-- أدوات التحكم -->
             <div class="controls">
                 <button class="ctrl-btn" onclick="togglePlay()"><i class="fas fa-play" id="playIcon"></i></button>
                 <div class="progress-bar"><div class="progress-fill"></div></div>
@@ -169,16 +155,20 @@
     </div>
 
     <script>
-        // --- إعداد القنوات ---
+        // --- إعدادات الهيدر المخصص ---
+        const CUSTOM_HEADERS = {
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36',
+            'Referer': 'https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8'
+        };
+
         const channels = [
-            // القناة الأولى فقط تحتوي على الرابط
             { 
                 name: "beIN Sports 1", 
                 url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8", 
                 active: true,
                 icon: "fa-futbol"
             },
-            // باقي القنوات فارغة (بدون رابط)
+            // القنوات الأخرى فارغة
             { name: "beIN Sports 2", url: "", active: false, icon: "fa-futbol" },
             { name: "beIN Sports 3", url: "", active: false, icon: "fa-futbol" },
             { name: "beIN Sports 4", url: "", active: false, icon: "fa-futbol" },
@@ -189,14 +179,12 @@
             { name: "beIN Xtra 2", url: "", active: false, icon: "fa-flag-checkered" }
         ];
 
-        // --- توليد البطاقات ---
         const grid = document.getElementById('channelsGrid');
         
         channels.forEach((ch, index) => {
             const card = document.createElement('div');
-            card.className = ch.active ? 'card' : 'card disabled'; // إضافة كلاس للقنوات الفارغة
-            
-            let badge = ch.active ? '<div class="live-badge">LIVE</div>' : ''; // علامة LIVE فقط للأولى
+            card.className = ch.active ? 'card' : 'card disabled';
+            let badge = ch.active ? '<div class="live-badge">LIVE</div>' : '';
             
             card.innerHTML = `
                 ${badge}
@@ -208,7 +196,7 @@
             grid.appendChild(card);
         });
 
-        // --- منطق المشغل ---
+        // --- منطق المشغل مع الترويسات ---
         var hls;
         const video = document.getElementById('mainVideo');
         const overlay = document.getElementById('overlay');
@@ -220,25 +208,34 @@
             const ch = channels[index];
             overlay.style.display = 'flex';
             label.textContent = ch.name;
-            
-            // إعادة ضبط الحالة
             statusMsg.style.display = 'block';
             video.style.display = 'block';
 
             if (!ch.active || !ch.url) {
-                // حالة القناة الفارغة
-                video.style.display = 'none'; // إخفاء الفيديو
+                video.style.display = 'none';
                 msgText.textContent = "عذراً، هذه القناة غير متوفرة حالياً";
                 statusMsg.innerHTML = '<i class="fas fa-ban status-icon"></i><span>عذراً، البث غير متوفر لهذه القناة</span>';
                 return;
             }
 
-            // حالة القناة الشغالة (الأولى)
             statusMsg.innerHTML = '<i class="fas fa-circle-notch fa-spin status-icon"></i><span>جاري الاتصال بالسيرفر...</span>';
             
             if (Hls.isSupported()) {
                 if(hls) hls.destroy();
-                hls = new Hls();
+
+                // إعداد HLS مع الترويسات المخصصة
+                var config = {
+                    xhrSetup: function (xhr, url) {
+                        try {
+                            xhr.setRequestHeader('User-Agent', CUSTOM_HEADERS['User-Agent']);
+                            xhr.setRequestHeader('Referer', CUSTOM_HEADERS['Referer']);
+                        } catch (e) {
+                            console.warn("Browser blocked setting custom headers (Security Policy)", e);
+                        }
+                    }
+                };
+
+                hls = new Hls(config);
                 hls.loadSource(ch.url);
                 hls.attachMedia(video);
                 
@@ -249,17 +246,33 @@
                 });
 
                 hls.on(Hls.Events.ERROR, function (event, data) {
+                    console.error("HLS Error:", data);
                     if (data.fatal) {
-                        statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle status-icon"></i><span>خطأ في الاتصال بالسيرفر</span>';
+                        switch(data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                statusMsg.innerHTML = '<i class="fas fa-wifi status-icon"></i><span>خطأ في الشبكة أو الترويسات</span>';
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle status-icon"></i><span>خطأ في صيغة الفيديو</span>';
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                statusMsg.innerHTML = '<i class="fas fa-times-circle status-icon"></i><span>فشل التشغيل</span>';
+                                hls.destroy();
+                                break;
+                        }
                     }
                 });
             }
+            // Safari Native HLS (لا يمكن تغيير الهيدرز هنا بسهولة)
             else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = ch.url;
                 video.addEventListener('loadedmetadata', function() {
                     statusMsg.style.display = 'none';
                     video.play();
                 });
+                // ملاحظة: Safari Native Player لا يدعم تغيير User-Agent عبر JS
             }
         }
 
@@ -270,7 +283,6 @@
             video.src = "";
         }
 
-        // أزرار التحكم
         function togglePlay() {
             if (video.paused) video.play(); else video.pause();
             updatePlayIcon();
@@ -294,7 +306,6 @@
             }
         }
         
-        // إغلاق المشغل عند الضغط خارجه (اختياري)
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closePlayer();
         });
