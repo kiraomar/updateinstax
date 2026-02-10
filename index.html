@@ -3,359 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>beIN Live - Netflix Style</title>
+    <title>beIN CONNECT - Live Stream</title>
+    <!-- مكتبة تشغيل HLS لروابط m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- خطوط وأيقونات -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- مكتبة HLS.js لتشغيل ملفات m3u8 -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
         :root {
-            --primary: #6c2a8f; /* بنفسجي بي إن */
-            --bg: #141414;
+            --primary: #8a2be2; /* بنفسجي بي إن */
+            --bg: #141414; /* خلفية داكنة */
             --card-bg: #2f2f2f;
             --text: #fff;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
         
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
-        }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
 
-        /* --- الهيدر --- */
+        /* الهيدر */
         header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 15px 4%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: 0.3s;
+            position: fixed; top: 0; width: 100%; padding: 20px 4%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            z-index: 100; display: flex; justify-content: space-between; align-items: center;
         }
-        
-        header.scrolled { background-color: #000; }
-
-        .logo { font-size: 24px; font-weight: 900; letter-spacing: 1px; color: #fff; }
+        .logo { font-size: 28px; font-weight: 900; color: #fff; }
         .logo span { color: var(--primary); }
 
-        /* --- العرض الرئيسي Hero --- */
+        /* منطقة الهيرو */
         .hero {
             height: 70vh;
-            background: url('https://images.unsplash.com/photo-1518091043644-c1d4457512c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover;
-            position: relative;
-            display: flex;
-            align-items: center;
-            padding: 0 4%;
+            background: url('https://images.unsplash.com/photo-1522778119026-d647f0565c6a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover;
+            position: relative; display: flex; align-items: center; padding: 0 4%;
         }
-
         .hero::after {
-            content: '';
-            position: absolute;
-            inset: 0;
+            content: ''; position: absolute; inset: 0;
             background: linear-gradient(to top, var(--bg) 0%, transparent 60%);
         }
-
         .hero-content { position: relative; z-index: 10; max-width: 600px; }
-        .hero h1 { font-size: 3rem; margin-bottom: 10px; }
-        .hero p { color: #ccc; font-size: 1.1rem; margin-bottom: 20px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 15px; text-shadow: 2px 2px 4px #000; }
         
         .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
+            padding: 12px 30px; border: none; border-radius: 4px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 10px; transition: 0.2s;
         }
         .btn-play { background: #fff; color: #000; }
-        .btn-play:hover { background: #dcdcdc; }
+        .btn-play:hover { transform: scale(1.05); }
 
-        /* --- شبكة القنوات --- */
-        .section-title { margin: 20px 4%; font-size: 1.4rem; font-weight: 700; }
-
+        /* شبكة القنوات */
+        .section-title { margin: 20px 4%; font-size: 1.5rem; font-weight: 700; color: #e5e5e5; }
         .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-            padding: 0 4% 50px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px; padding: 0 4% 50px;
         }
-
         .card {
-            background: var(--card-bg);
-            aspect-ratio: 16/9;
-            border-radius: 6px;
-            position: relative;
-            cursor: pointer;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            background: var(--card-bg); aspect-ratio: 16/9; border-radius: 6px;
+            position: relative; cursor: pointer; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: transform 0.3s, z-index 0.3s;
         }
-
-        .card:hover {
-            transform: scale(1.05);
-            z-index: 10;
-            box-shadow: 0 0 20px rgba(108, 42, 143, 0.4);
-        }
-
-        .card-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
-        .card-title { font-weight: 700; text-transform: uppercase; }
+        .card:hover { transform: scale(1.1); z-index: 50; box-shadow: 0 0 20px rgba(138, 43, 226, 0.4); }
         
-        .live-tag {
-            position: absolute;
-            top: 10px; right: 10px;
-            background: red;
-            color: #fff;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 2px;
-            animation: blink 2s infinite;
+        .card.disabled { opacity: 0.5; cursor: not-allowed; } /* ستايل للقنوات الفارغة */
+
+        .card-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 8px; }
+        .card-name { font-weight: 700; text-transform: uppercase; font-size: 1.1rem; }
+        
+        .live-badge {
+            position: absolute; top: 10px; right: 10px; background: red; color: #fff;
+            padding: 2px 6px; font-size: 0.7rem; font-weight: bold; border-radius: 2px;
+            animation: pulse 1.5s infinite;
         }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        @keyframes blink { 50% { opacity: 0.5; } }
-
-        /* --- مشغل الفيديو Overlay --- */
+        /* مشغل الفيديو (Overlay) */
         .overlay {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 2000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0; background: #000; z-index: 2000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-
-        .video-wrapper {
-            width: 90%;
-            max-width: 1100px;
-            aspect-ratio: 16/9;
-            background: #000;
-            position: relative;
-            box-shadow: 0 0 40px rgba(108, 42, 143, 0.2);
+        .video-container {
+            width: 90%; max-width: 1200px; aspect-ratio: 16/9;
+            background: #000; position: relative; 
+            box-shadow: 0 0 50px rgba(138, 43, 226, 0.2);
+            border: 1px solid #333;
         }
-
         video { width: 100%; height: 100%; object-fit: contain; }
-
+        
         .close-btn {
-            position: absolute;
-            top: 20px; right: 20px;
-            color: #fff;
-            font-size: 30px;
-            cursor: pointer;
-            z-index: 2001;
-            background: rgba(0,0,0,0.5);
-            width: 45px; height: 45px;
-            border-radius: 50%;
+            position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem;
+            cursor: pointer; z-index: 2001; background: rgba(0,0,0,0.5);
+            width: 50px; height: 50px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
         }
+        .close-btn:hover { background: rgba(255,255,255,0.2); }
 
-        /* --- أدوات التحكم المخصصة --- */
+        /* رسائل الحالة داخل المشغل */
+        .status-msg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-size: 1.2rem; background: rgba(0,0,0,0.8);
+            padding: 20px; border-radius: 8px; display: none; text-align: center;
+        }
+        .status-icon { font-size: 3rem; margin-bottom: 10px; display: block; color: var(--primary); }
+
+        /* تحكمات المشغل */
         .controls {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            padding: 15px;
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            display: flex; align-items: center; gap: 15px; opacity: 0; transition: 0.3s;
         }
+        .video-container:hover .controls { opacity: 1; }
+        
+        .ctrl-btn { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+        .ctrl-btn:hover { color: var(--primary); }
+        
+        .progress-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 100%; }
 
-        .video-wrapper:hover .controls { opacity: 1; }
-
-        .ctrl-btn {
-            background: none; border: none; color: #fff;
-            font-size: 18px; cursor: pointer; opacity: 0.8;
-            transition: 0.2s;
-        }
-        .ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
-
-        .progress-area { flex: 1; height: 4px; background: #444; border-radius: 2px; position: relative; cursor: pointer; }
-        .progress-fill { height: 100%; background: var(--primary); width: 0%; border-radius: 2px; }
-
-        /* قائمة الجودة */
-        .quality-container { position: relative; }
-        .quality-menu {
-            position: absolute;
-            bottom: 35px; left: 50%; transform: translateX(-50%);
-            background: rgba(20,20,20,0.95);
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 5px 0;
-            display: none;
-            min-width: 100px;
-            flex-direction: column;
-        }
-        .quality-menu.show { display: flex; }
-        .q-opt { padding: 8px 15px; font-size: 13px; cursor: pointer; text-align: center; color: #ccc; }
-        .q-opt:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .q-opt.active { color: var(--primary); font-weight: bold; }
-
-        .loading-spinner {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--primary); font-size: 40px; display: none;
-        }
-
-        /* رسالة الخطأ */
-        .error-msg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #ff4444; background: rgba(0,0,0,0.8); padding: 20px;
-            border-radius: 8px; text-align: center; display: none;
-        }
-
-        @media(max-width: 700px) {
-            .hero h1 { font-size: 2rem; }
-            .grid { grid-template-columns: repeat(2, 1fr); }
-            .video-wrapper { width: 100%; }
-        }
     </style>
 </head>
 <body>
 
-    <header id="header">
+    <header>
         <div class="logo">beIN <span>LIVE</span></div>
-        <div style="font-size: 14px; color: #aaa;">البث المباشر</div>
     </header>
 
     <div class="hero">
         <div class="hero-content">
-            <h1>أقوى المباريات العالمية</h1>
-            <p>شاهد دوري أبطال أوروبا، الدوري الإسباني، والإنجليزي بجودة عالية وبدون تقطيع.</p>
-            <button class="btn btn-play" onclick="playChannel(0)"><i class="fas fa-play"></i> شاهد الآن</button>
+            <h1>البث المباشر - القناة الرئيسية</h1>
+            <p style="color:#ccc; margin-bottom: 20px; font-size: 1.2rem;">تابع أهم المباريات بجودة عالية على beIN Sports 1.</p>
+            <!-- زر التشغيل السريع للقناة الأولى -->
+            <button class="btn btn-play" onclick="playChannel(0)">
+                <i class="fas fa-play"></i> تشغيل القناة 1
+            </button>
         </div>
     </div>
 
-    <div class="section-title">قنوات beIN SPORTS</div>
-    <div class="grid" id="channelGrid">
-        <!-- سيتم توليد القنوات هنا -->
-    </div>
+    <div class="section-title">قائمة القنوات</div>
+    <div class="grid" id="channelsGrid"></div>
 
-    <!-- المشغل -->
+    <!-- واجهة المشغل -->
     <div class="overlay" id="overlay">
         <div class="close-btn" onclick="closePlayer()"><i class="fas fa-times"></i></div>
         
-        <div class="video-wrapper">
-            <video id="videoPlayer"></video>
-            <div class="loading-spinner" id="spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
-            <div class="error-msg" id="errorMsg">عذراً، البث غير متاح حالياً أو الرابط متوقف.</div>
+        <div class="video-container">
+            <video id="mainVideo" playsinline></video>
+            
+            <!-- رسالة التحميل أو الخطأ أو عدم التوفر -->
+            <div class="status-msg" id="statusMsg">
+                <i class="fas fa-circle-notch fa-spin status-icon"></i>
+                <span id="msgText">جاري التحميل...</span>
+            </div>
 
             <!-- أدوات التحكم -->
             <div class="controls">
                 <button class="ctrl-btn" onclick="togglePlay()"><i class="fas fa-play" id="playIcon"></i></button>
-                <div class="progress-area">
-                    <div class="progress-fill" style="width: 100%;"></div> <!-- بث مباشر دائماً 100% -->
-                </div>
-                
-                <!-- ترس الجودة -->
-                <div class="quality-container">
-                    <button class="ctrl-btn" onclick="toggleQuality()"><i class="fas fa-cog"></i></button>
-                    <div class="quality-menu" id="qualityMenu">
-                        <div class="q-opt active">Auto</div>
-                        <div class="q-opt">1080p</div>
-                        <div class="q-opt">720p</div>
-                        <div class="q-opt">480p</div>
-                    </div>
-                </div>
-
-                <button class="ctrl-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="volIcon"></i></button>
-                <button class="ctrl-btn" onclick="toggleFull()"><i class="fas fa-expand"></i></button>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+                <button class="ctrl-btn" title="الجودة"><i class="fas fa-cog"></i></button>
+                <button class="ctrl-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="muteIcon"></i></button>
+                <button class="ctrl-btn" onclick="toggleFullScreen()"><i class="fas fa-expand"></i></button>
             </div>
         </div>
-        <h3 id="channelNameDisplay" style="margin-top: 15px; color: #ccc;"></h3>
+        <h2 id="channelLabel" style="margin-top: 15px; color: #ccc; font-weight: 300;"></h2>
     </div>
 
     <script>
         // --- إعداد القنوات ---
-        // ملاحظة: قمت بتكرار النمط ch1, ch2, ch3 بناءً على الرابط الذي أرسلته
-        const baseUrl = "https://stream.supertv.gg:3002/supertv/sport/stv1/";
         const channels = [
-            { name: "beIN Sports 1", url: baseUrl + "ch1/adaptive.m3u8", icon: "fa-futbol" },
-            { name: "beIN Sports 2", url: baseUrl + "ch2/adaptive.m3u8", icon: "fa-futbol" },
-            { name: "beIN Sports 3", url: baseUrl + "ch3/adaptive.m3u8", icon: "fa-futbol" },
-            { name: "beIN Sports 4", url: baseUrl + "ch4/adaptive.m3u8", icon: "fa-futbol" },
-            { name: "beIN Premium 1", url: baseUrl + "ch5/adaptive.m3u8", icon: "fa-star" },
-            { name: "beIN Premium 2", url: baseUrl + "ch6/adaptive.m3u8", icon: "fa-star" },
-            { name: "beIN News", url: baseUrl + "ch7/adaptive.m3u8", icon: "fa-newspaper" },
-            { name: "beIN Xtra 1", url: baseUrl + "ch8/adaptive.m3u8", icon: "fa-running" },
-            { name: "beIN Xtra 2", url: baseUrl + "ch9/adaptive.m3u8", icon: "fa-flag-checkered" },
+            // القناة الأولى فقط تحتوي على الرابط
+            { 
+                name: "beIN Sports 1", 
+                url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8", 
+                active: true,
+                icon: "fa-futbol"
+            },
+            // باقي القنوات فارغة (بدون رابط)
+            { name: "beIN Sports 2", url: "", active: false, icon: "fa-futbol" },
+            { name: "beIN Sports 3", url: "", active: false, icon: "fa-futbol" },
+            { name: "beIN Sports 4", url: "", active: false, icon: "fa-futbol" },
+            { name: "beIN Sports 5", url: "", active: false, icon: "fa-futbol" },
+            { name: "beIN Premium 1", url: "", active: false, icon: "fa-star" },
+            { name: "beIN Premium 2", url: "", active: false, icon: "fa-star" },
+            { name: "beIN Xtra 1", url: "", active: false, icon: "fa-running" },
+            { name: "beIN Xtra 2", url: "", active: false, icon: "fa-flag-checkered" }
         ];
 
-        // --- توليد الواجهة ---
-        const grid = document.getElementById('channelGrid');
+        // --- توليد البطاقات ---
+        const grid = document.getElementById('channelsGrid');
+        
         channels.forEach((ch, index) => {
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = ch.active ? 'card' : 'card disabled'; // إضافة كلاس للقنوات الفارغة
+            
+            let badge = ch.active ? '<div class="live-badge">LIVE</div>' : ''; // علامة LIVE فقط للأولى
+            
             card.innerHTML = `
-                <div class="live-tag">LIVE</div>
+                ${badge}
                 <div class="card-icon"><i class="fas ${ch.icon}"></i></div>
-                <div class="card-title">${ch.name}</div>
+                <div class="card-name">${ch.name}</div>
             `;
+            
             card.onclick = () => playChannel(index);
             grid.appendChild(card);
         });
 
-        // --- منطق المشغل (HLS.js) ---
-        const video = document.getElementById('videoPlayer');
+        // --- منطق المشغل ---
+        var hls;
+        const video = document.getElementById('mainVideo');
         const overlay = document.getElementById('overlay');
-        const spinner = document.getElementById('spinner');
-        const errorMsg = document.getElementById('errorMsg');
-        let hls = null;
+        const statusMsg = document.getElementById('statusMsg');
+        const msgText = document.getElementById('msgText');
+        const label = document.getElementById('channelLabel');
 
         function playChannel(index) {
             const ch = channels[index];
-            document.getElementById('channelNameDisplay').innerText = ch.name;
             overlay.style.display = 'flex';
-            spinner.style.display = 'block';
-            errorMsg.style.display = 'none';
+            label.textContent = ch.name;
             
-            // تهيئة HLS
+            // إعادة ضبط الحالة
+            statusMsg.style.display = 'block';
+            video.style.display = 'block';
+
+            if (!ch.active || !ch.url) {
+                // حالة القناة الفارغة
+                video.style.display = 'none'; // إخفاء الفيديو
+                msgText.textContent = "عذراً، هذه القناة غير متوفرة حالياً";
+                statusMsg.innerHTML = '<i class="fas fa-ban status-icon"></i><span>عذراً، البث غير متوفر لهذه القناة</span>';
+                return;
+            }
+
+            // حالة القناة الشغالة (الأولى)
+            statusMsg.innerHTML = '<i class="fas fa-circle-notch fa-spin status-icon"></i><span>جاري الاتصال بالسيرفر...</span>';
+            
             if (Hls.isSupported()) {
-                if(hls) hls.destroy(); // تنظيف المشغل السابق
+                if(hls) hls.destroy();
                 hls = new Hls();
                 hls.loadSource(ch.url);
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    spinner.style.display = 'none';
-                    video.play().catch(e => console.log("Auto-play blocked"));
+                    statusMsg.style.display = 'none';
+                    video.play().catch(e => console.log("Autoplay blocked"));
                     updatePlayIcon();
                 });
 
                 hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
-                        spinner.style.display = 'none';
-                        errorMsg.style.display = 'block';
-                        console.error("Stream Error:", data);
+                        statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle status-icon"></i><span>خطأ في الاتصال بالسيرفر</span>';
                     }
                 });
             }
-            // دعم Safari (Native HLS)
             else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = ch.url;
                 video.addEventListener('loadedmetadata', function() {
-                    spinner.style.display = 'none';
+                    statusMsg.style.display = 'none';
                     video.play();
                 });
-            } else {
-                errorMsg.innerText = "المتصفح لا يدعم هذا النوع من البث";
-                errorMsg.style.display = 'block';
             }
         }
 
@@ -366,14 +270,11 @@
             video.src = "";
         }
 
-        // --- وظائف التحكم ---
+        // أزرار التحكم
         function togglePlay() {
-            if(video.paused) video.play(); else video.pause();
+            if (video.paused) video.play(); else video.pause();
             updatePlayIcon();
         }
-        
-        video.addEventListener('play', updatePlayIcon);
-        video.addEventListener('pause', updatePlayIcon);
 
         function updatePlayIcon() {
             const icon = document.getElementById('playIcon');
@@ -382,38 +283,20 @@
 
         function toggleMute() {
             video.muted = !video.muted;
-            document.getElementById('volIcon').className = video.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+            document.getElementById('muteIcon').className = video.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
         }
 
-        function toggleFull() {
+        function toggleFullScreen() {
             if (!document.fullscreenElement) {
-                if(video.requestFullscreen) video.requestFullscreen();
-                else if(video.webkitRequestFullscreen) video.webkitRequestFullscreen(); // Safari
-                else if(overlay.requestFullscreen) overlay.requestFullscreen();
+                video.requestFullscreen().catch(err => console.log(err));
             } else {
-                if(document.exitFullscreen) document.exitFullscreen();
+                document.exitFullscreen();
             }
         }
-
-        // --- قائمة الجودة ---
-        // ملاحظة: في HLS Adaptive، الجودة تكون تلقائية غالباً (Auto) بناءً على سرعة النت
-        function toggleQuality() {
-            const menu = document.getElementById('qualityMenu');
-            menu.classList.toggle('show');
-        }
-
-        // إغلاق القائمة عند النقر خارجها
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.quality-container')) {
-                document.getElementById('qualityMenu').classList.remove('show');
-            }
-        });
-
-        // تأثير السكرول
-        window.addEventListener('scroll', () => {
-            const header = document.getElementById('header');
-            if(window.scrollY > 50) header.classList.add('scrolled');
-            else header.classList.remove('scrolled');
+        
+        // إغلاق المشغل عند الضغط خارجه (اختياري)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closePlayer();
         });
 
     </script>
