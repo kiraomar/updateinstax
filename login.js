@@ -1,14 +1,15 @@
 // Firebase Configuration and Initialization
     const firebaseConfig = {
-      apiKey: "AIzaSyCe8nzeQnE00SCirH6nIJiqC0UqNctLv8M",
-      authDomain: "okay-70776.firebaseapp.com",
-      databaseURL: "https://okay-70776-default-rtdb.firebaseio.com",
-      projectId: "okay-70776",
-      storageBucket: "okay-70776.appspot.com",
-      messagingSenderId: "687867635737",
-      appId: "1:687867635737:web:e6fe41ff2ae2aa87a4e288",
-      measurementId: "G-D0QRWZLZV7"
-    };
+{
+  apiKey: "AIzaSyCgVurvSQHUhTB5ARj0E9I1ig6DZr3mm5I",
+  authDomain: "omartv-90b13.firebaseapp.com",
+  databaseURL: "https://omartv-90b13-default-rtdb.firebaseio.com",
+  projectId: "omartv-90b13",
+  storageBucket: "omartv-90b13.firebasestorage.app",
+  messagingSenderId: "22398442375",
+  appId: "1:22398442375:android:96e6fcd28513de797e5122",
+  measurementId: "G-D0QRWZLZV7"
+}
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
