@@ -21,8 +21,7 @@
         width: 45px; height: 45px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         color: white; cursor: pointer; backdrop-filter: blur(5px);
-        text-decoration: none; /* مهم لأننا سنستخدمه كرابط a */
-        transition: background 0.3s;
+        text-decoration: none; transition: background 0.3s;
     }
     #back-btn:hover { background: rgba(255,255,255,0.2); }
     
@@ -58,6 +57,15 @@
 
     #error-msg { position: absolute; color: #ff6b6b; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; display: none; text-align: center; z-index: 100; }
 
+    /* Center Play Button (For explicit interaction) */
+    #center-play-btn {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 80px; height: 80px; background: rgba(0,0,0,0.6); border-radius: 50%;
+        display: none; align-items: center; justify-content: center;
+        border: 2px solid white; cursor: pointer; z-index: 40;
+    }
+    #center-play-btn i { width: 40px; height: 40px; color: white; margin-left: 5px; }
+
     /* Settings Menu */
     #settings-menu {
         position: absolute; bottom: 80px; left: 20px; background: rgba(20,20,20,0.95);
@@ -75,13 +83,16 @@
     <div id="error-msg">حدث خطأ في التشغيل</div>
     <div id="toast"></div>
     <div id="channel-title">جاري التحميل...</div>
+    
+    <!-- زر تشغيل كبير يظهر فقط عند فشل التشغيل التلقائي -->
+    <div id="center-play-btn"><i data-feather="play"></i></div>
 
-    <!-- زر الرجوع للصفحة الرئيسية -->
     <a href="index.html" id="back-btn">
         <i data-feather="arrow-right"></i>
     </a>
 
-    <video id="video" autoplay playsinline crossorigin="anonymous"></video>
+    <!-- إضافة muted و autoplay و playsinline لزيادة فرص التشغيل -->
+    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
 
     <!-- Controls -->
     <div id="controls" class="controls-overlay">
@@ -89,6 +100,7 @@
             <div>
                 <button class="control-btn" id="settings-btn"><i data-feather="settings"></i></button>
                 <button class="control-btn" id="fullscreen-btn"><i data-feather="maximize"></i></button>
+                <button class="control-btn" id="mute-btn"><i data-feather="volume-x"></i></button> <!-- زر الصوت -->
             </div>
             <div>
                 <button class="control-btn" id="play-btn"><i data-feather="pause"></i></button>
@@ -104,25 +116,65 @@
 </div>
 
 <script>
-    // 1. استخراج البيانات من الرابط
+    // 1. استخراج البيانات
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('url');
     const streamName = urlParams.get('name');
 
     // إعدادات المتغيرات
     const video = document.getElementById('video');
-    const corsProxy = 'https://primetv.omao18193.workers.dev/'; // رابط الووركر الخاص بك
+    const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
     const loading = document.getElementById('loading-spinner');
     const errorMsg = document.getElementById('error-msg');
     const toast = document.getElementById('toast');
+    const centerPlayBtn = document.getElementById('center-play-btn');
+    const muteBtn = document.getElementById('mute-btn');
+    
     let hls = null;
     let hlsLevels = [];
     let controlsTimeout;
 
-    // تحديث اسم القناة
     if (streamName) document.getElementById('channel-title').textContent = streamName;
 
-    // دالة التشغيل الرئيسية (نسخة محسنة للسرعة)
+    // دالة محاولة التشغيل الذكية (Smart AutoPlay)
+    function attemptPlay() {
+        // نحاول التشغيل
+        var playPromise = video.play();
+
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // نجح التشغيل!
+                loading.style.display = 'none';
+                centerPlayBtn.style.display = 'none';
+                updatePlayIcons();
+                // إذا كان الفيديو صامتاً، نخبر المستخدم
+                if (video.muted) {
+                    showToast("تم كتم الصوت للتشغيل التلقائي");
+                    updateMuteIcon();
+                }
+            })
+            .catch(error => {
+                // فشل التشغيل (غالباً بسبب الصوت)
+                console.log("Autoplay prevented. Trying muted...");
+                // نجبر الفيديو على الصمت ونحاول مرة أخرى
+                video.muted = true;
+                updateMuteIcon();
+                
+                video.play().then(() => {
+                    loading.style.display = 'none';
+                    centerPlayBtn.style.display = 'none';
+                    showToast("تم كتم الصوت تلقائياً");
+                    updatePlayIcons();
+                }).catch(e => {
+                    // فشل تماماً (نادر الحدوث)، نظهر زر التشغيل الكبير
+                    loading.style.display = 'none';
+                    centerPlayBtn.style.display = 'flex';
+                    showToast("انقر للتشغيل");
+                });
+            });
+        }
+    }
+
     function initPlayer() {
         if (!streamUrl) {
             showError("لم يتم العثور على رابط القناة");
@@ -137,20 +189,17 @@
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: true,
-                
-                // تحسينات التخزين المؤقت (Buffering) لمنع التقطيع
-                maxBufferLength: 30,        // زيادة البفر إلى 30 ثانية
-                maxMaxBufferLength: 60,     // الحد الأقصى 60 ثانية
-                backBufferLength: 90,       // الاحتفاظ بـ 90 ثانية سابقة
-                
-                // إعدادات الشبكة والمرونة
+                // إعدادات البفر (Buffer)
+                maxBufferLength: 30,
+                maxMaxBufferLength: 60,
+                backBufferLength: 90,
+                // إعدادات الشبكة
                 manifestLoadingTimeOut: 10000,
                 manifestLoadingMaxRetry: 4,
                 levelLoadingTimeOut: 10000,
                 levelLoadingMaxRetry: 4,
                 fragLoadingTimeOut: 20000,
                 fragLoadingMaxRetry: 6,
-                
                 xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
             });
 
@@ -159,22 +208,23 @@
 
             hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                 hlsLevels = hls.levels;
-                video.play().catch(e => console.log("Auto-play blocked", e));
+                // استدعاء دالة التشغيل الذكية بدلاً من video.play() مباشرة
+                attemptPlay();
             });
 
             hls.on(Hls.Events.LEVEL_LOADED, () => {
-                loading.style.display = 'none';
+                // التأكد من إخفاء اللودينج عند بدء تحميل البيانات فعلياً
+                if(!video.paused) loading.style.display = 'none';
             });
 
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                     switch (data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.log("Network error, trying to recover...");
+                            console.log("Network error, retrying...");
                             hls.startLoad();
                             break;
                         case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.log("Media error, recovering...");
                             hls.recoverMediaError();
                             break;
                         default:
@@ -186,16 +236,14 @@
             });
 
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Safari support
             video.src = finalUrl;
             video.addEventListener('loadedmetadata', () => {
-                video.play();
-                loading.style.display = 'none';
+                attemptPlay();
             });
         }
     }
 
-    // واجهة المستخدم (UI Functions)
+    // UI Functions
     function showError(msg) {
         loading.style.display = 'none';
         errorMsg.style.display = 'block';
@@ -205,16 +253,27 @@
     function showToast(msg) {
         toast.textContent = msg;
         toast.style.opacity = '1';
-        setTimeout(() => toast.style.opacity = '0', 1000);
+        setTimeout(() => toast.style.opacity = '0', 2000);
     }
 
-    // التحكم (Controls)
+    function updatePlayIcons() {
+        const icon = video.paused ? "play" : "pause";
+        document.getElementById('play-btn').innerHTML = `<i data-feather="${icon}"></i>`;
+        feather.replace();
+    }
+
+    function updateMuteIcon() {
+        const icon = video.muted ? "volume-x" : "volume-2";
+        muteBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+        feather.replace();
+    }
+
+    // Controls Logic
     const controls = document.getElementById('controls');
     const playBtn = document.getElementById('play-btn');
     const settingsBtn = document.getElementById('settings-btn');
     const settingsMenu = document.getElementById('settings-menu');
 
-    // إخفاء/إظهار التحكم
     function showControls() {
         controls.classList.remove('hidden');
         document.body.style.cursor = 'default';
@@ -231,19 +290,28 @@
     document.body.addEventListener('touchstart', showControls);
     document.body.addEventListener('click', showControls);
 
-    // Play/Pause
-    playBtn.onclick = () => {
-        if (video.paused) {
-            video.play();
-            playBtn.innerHTML = '<i data-feather="pause"></i>';
-        } else {
-            video.pause();
-            playBtn.innerHTML = '<i data-feather="play"></i>';
-        }
-        feather.replace();
+    // Button Events
+    const togglePlay = () => {
+        if (video.paused) video.play().then(updatePlayIcons);
+        else video.pause(); updatePlayIcons();
     };
 
-    // Fullscreen
+    playBtn.onclick = togglePlay;
+    centerPlayBtn.onclick = () => {
+        // عند الضغط على الزر الكبير، نحاول التشغيل بالصوت
+        video.muted = false;
+        video.play().then(() => {
+            centerPlayBtn.style.display = 'none';
+            updatePlayIcons();
+            updateMuteIcon();
+        });
+    };
+
+    muteBtn.onclick = () => {
+        video.muted = !video.muted;
+        updateMuteIcon();
+    };
+
     document.getElementById('fullscreen-btn').onclick = () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(e => console.log(e));
@@ -251,6 +319,12 @@
             document.exitFullscreen();
         }
     };
+
+    // Video Events
+    video.addEventListener('play', updatePlayIcons);
+    video.addEventListener('pause', updatePlayIcons);
+    video.addEventListener('waiting', () => loading.style.display = 'block');
+    video.addEventListener('playing', () => loading.style.display = 'none');
 
     // Settings (Quality)
     settingsBtn.onclick = (e) => {
@@ -260,14 +334,11 @@
             return;
         }
         
-        // بناء القائمة
         const list = document.getElementById('quality-list');
         list.innerHTML = '';
         
-        // خيار Auto
         addQualityOption(list, -1, 'Auto');
         
-        // باقي الجودات
         if (hlsLevels.length > 0) {
             hlsLevels.forEach((lvl, index) => {
                 const label = lvl.height ? `${lvl.height}p` : `Level ${index}`;
@@ -276,14 +347,12 @@
         } else {
             list.innerHTML += '<div class="menu-item" style="cursor:default">لا توجد خيارات</div>';
         }
-        
         settingsMenu.style.display = 'block';
     };
 
     function addQualityOption(container, index, label) {
         const div = document.createElement('div');
         div.className = 'menu-item';
-        // إضافة علامة صح إذا كانت هذه الجودة مختارة
         const isSelected = hls && hls.currentLevel === index;
         div.innerHTML = `<span>${label}</span> ${isSelected ? '<i data-feather="check" style="width:14px;color:var(--primary-color)"></i>' : ''}`;
         
@@ -296,17 +365,17 @@
         feather.replace();
     }
 
-    // إخفاء القائمة عند النقر خارجها
     document.addEventListener('click', (e) => {
         if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
             settingsMenu.style.display = 'none';
         }
     });
 
-    // تشغيل الأيقونات والبدء
     feather.replace();
     initPlayer();
 
 </script>
 </body>
 </html>
+
+
