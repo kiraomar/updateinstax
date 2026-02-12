@@ -11,7 +11,7 @@ body,html{margin:0;padding:0;overflow:hidden;background:#000;height:100%;width:1
 #player-container{position:absolute;top:0;left:0;width:100%;height:100%;}
 #video-wrapper{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;background:#000;}
 #video{width:100%;height:100%;object-fit:contain;}
-#loading-spinner{width:60px;height:60px;border:5px solid rgba(255,255,255,0.2);border-top-color:#ffc107;border-radius:50%;animation:spin 1s linear infinite;position:absolute;z-index:100;display:block;top:50%;left:50%;transform:translate(-50%,-50%);}
+#loading-spinner{width:60px;height:60px;border:5px solid rgba(255,255,255,0.2);border-top-color:#ffc107;border-radius:50%;animation:spin 1s linear infinite;position:absolute;z-index:100;display:none;top:50%;left:50%;transform:translate(-50%,-50%);}
 @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
 #error-overlay{position:absolute;z-index:100;inset:0;background-color:rgba(0,0,0,0.85);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;}
 .controls-overlay{position:absolute;z-index:10;transition:opacity 0.3s;opacity:0;visibility:hidden;pointer-events:none;}
@@ -48,12 +48,25 @@ body,html{margin:0;padding:0;overflow:hidden;background:#000;height:100%;width:1
 .channel-item.error{background:rgba(255,0,0,0.2);color:#ff6b6b;border-color:#ff6b6b;}
 #channels-toggle{position:absolute;top:20px;left:20px;z-index:15;background:rgba(0,0,0,0.7);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,0.2);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:all 0.3s;}
 #channels-toggle:hover{background:rgba(255,255,255,0.2);}
+#select-channel-msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.2em;
+    z-index: 5;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0.7;
+}
 </style>
 </head>
 <body>
 
 <div id="player-container">
 <div id="loading-spinner"></div>
+<div id="select-channel-msg">اختر قناة للبدء</div>
 <div id="error-overlay">
 <i data-feather="alert-triangle"></i>
 <h3 id="error-title">فشل تحميل البث</h3>
@@ -125,9 +138,7 @@ body,html{margin:0;padding:0;overflow:hidden;background:#000;height:100%;width:1
 </div>
 
 <script>
-// تشغيل الفيديو مباشرة عند تحميل الصفحة
 window.addEventListener('load', function() {
-    // تعريف المتغيرات
     const e = {
         video: document.getElementById('video'),
         playerContainer: document.getElementById('player-container'),
@@ -157,35 +168,27 @@ window.addEventListener('load', function() {
         videoWrapper: document.getElementById('video-wrapper'),
         channelsContainer: document.getElementById('channels-container'),
         channelsOverlay: document.getElementById('channels-overlay'),
-        channelsToggle: document.getElementById('channels-toggle')
+        channelsToggle: document.getElementById('channels-toggle'),
+        selectChannelMsg: document.getElementById('select-channel-msg')
     };
 
-    // ==========================================
-    // إعدادات البروكسي (Cloudflare Worker)
-    // ==========================================
-    // تم إضافة الرابط الخاص بك هنا
     const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
 
+    // قنوات بي إن سبورت فقط
     const channels = [
-        { name: "Alkass 1", url: "https://liveeu-gcp.alkassdigital.net/alkass1-p/main.m3u8" },
-        { name: "Alkass 2", url: "https://liveeu-gcp.alkassdigital.net/alkass2-p/main.m3u8" },
-        { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
         { name: "beIN Sports 1", url: "http://135.125.109.73:9000/beinsport1_.m3u8" },
-        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
+        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8" },
+        { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
         { name: "beIN Sports 4", url: "https://py.dencreak.com/bn_s_fhd4.m3u8" },
         { name: "beIN Sports 5", url: "https://py.dencreak.com/bn_s_fhd5.m3u8" },
         { name: "beIN Sports 6", url: "https://py.dencreak.com/bn_s_fhd6.m3u8" },
         { name: "beIN Sports 7", url: "https://py.dencreak.com/bn_s_fhd7.m3u8" },
         { name: "beIN Sports 8", url: "https://py.dencreak.com/bn_s_fhd8.m3u8" },
-        { name: "beIN Sports 9", url: "https://py.dencreak.com/bn_s_fhd9.m3u8" },
-        { name: "Alkass 3", url: "https://liveeu-gcp.alkassdigital.net/alkass3-p/main.m3u8" },
-        { name: "Alkass 4", url: "https://liveeu-gcp.alkassdigital.net/alkass4-p/main.m3u8" },
-        { name: "Alkass 5", url: "https://liveeu-gcp.alkassdigital.net/alkass5-p/main.m3u8" },
-        { name: "Alkass 6", url: "https://liveeu-gcp.alkassdigital.net/alkass6-p/main.m3u8" },
-          ];
+        { name: "beIN Sports 9", url: "https://py.dencreak.com/bn_s_fhd9.m3u8" }
+    ];
 
     let t, n, o = false, i = [], l = !1;
-    let currentChannelUrl = channels[0].url;
+    let currentChannelUrl = ""; // فارغ في البداية
     let channelsVisible = false;
 
     function createChannelsList() {
@@ -201,6 +204,7 @@ window.addEventListener('load', function() {
                     item.classList.remove('active');
                 });
                 channelItem.classList.add('active');
+                e.selectChannelMsg.style.display = 'none'; // إخفاء رسالة الترحيب
                 loadChannel(channel.url, channelItem);
                 hideChannels();
             });
@@ -227,12 +231,9 @@ window.addEventListener('load', function() {
         channelsVisible = false;
     }
 
-    async function loadVideo(channelUrl = currentChannelUrl, channelElement = null) {
-        
-        // ==========================================
-        // منطق البروكسي (Proxy Logic)
-        // ==========================================
-        // إذا كان الرابط HTTP ونحن في صفحة HTTPS، نستخدم البروكسي
+    async function loadVideo(channelUrl, channelElement = null) {
+        if (!channelUrl) return;
+
         if (corsProxy && channelUrl.startsWith('http://') && window.location.protocol === 'https:') {
             console.log("Using proxy for HTTP stream:", channelUrl);
             channelUrl = corsProxy + channelUrl;
@@ -261,7 +262,6 @@ window.addEventListener('load', function() {
             n = null;
         }
 
-        // ضبط الصوت على 100%
         e.video.volume = 1.0;
         e.volumeSlider.value = 100;
         e.video.muted = false;
@@ -283,7 +283,6 @@ window.addEventListener('load', function() {
             n.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
                 i = n.levels;
                 c();
-                console.log("Manifest parsed for:", channelUrl, data);
                 e.video.play().catch(error => {
                     console.error("Play error:", error);
                     e.loadingSpinner.style.display = "none";
@@ -301,22 +300,18 @@ window.addEventListener('load', function() {
             });
 
             n.on(Hls.Events.ERROR, function(event, data) {
-                console.error("HLS Error:", data);
                 if (data.fatal) {
                     switch (data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.error("Network error for channel:", channelUrl);
                             if (channelElement) channelElement.classList.add('error');
-                            
                             let errorMsg = "تعذر الاتصال بالبث.";
                             if(window.location.protocol === 'https:' && channelUrl.startsWith('http:') && !corsProxy) {
-                                errorMsg = "خطأ أمني: لا يمكن تشغيل رابط HTTP على موقع HTTPS بدون وسيط (Proxy).";
+                                errorMsg = "خطأ أمني: لا يمكن تشغيل رابط HTTP على موقع HTTPS.";
                             }
                             a("خطأ في الشبكة", errorMsg);
                             n.startLoad();
                             break;
                         case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.error("Media error for channel:", channelUrl);
                             if (channelElement) channelElement.classList.add('error');
                             a("خطأ في الوسائط", "هناك مشكلة في تشغيل البث.");
                             n.recoverMediaError();
@@ -330,7 +325,6 @@ window.addEventListener('load', function() {
             });
         }
         else if (e.video.canPlayType("application/vnd.apple.mpegurl")) {
-            console.log('Using native HLS support for:', channelUrl);
             e.video.src = channelUrl;
             e.video.addEventListener('loadedmetadata', function() {
                 e.video.play();
@@ -341,13 +335,11 @@ window.addEventListener('load', function() {
                  a("فشل تحميل البث", "المصدر غير متاح أو به مشكلة.");
             });
         } else {
-            console.error('HLS not supported');
             a("خطأ", "المتصفح لا يدعم تشغيل هذا النوع من البث.");
         }
     }
 
     function loadChannel(channelUrl, channelElement) {
-        console.log("Loading channel:", channelUrl);
         loadVideo(channelUrl, channelElement);
     }
 
@@ -567,13 +559,9 @@ window.addEventListener('load', function() {
 
     createChannelsList();
     
-    // تشغيل القناة الأولى تلقائياً عند تحميل الصفحة
+    // إظهار قائمة القنوات تلقائياً عند الفتح ليختار المستخدم
     setTimeout(() => {
-        const firstChannel = document.querySelector('.channel-item');
-        if (firstChannel) {
-            firstChannel.classList.add('active');
-        }
-        loadVideo(); // تشغيل القناة الأولى تلقائياً
+        showChannels();
     }, 500);
 
     feather.replace();
