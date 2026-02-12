@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html dir='rtl'>
+<head>
+<meta charset='UTF-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Player</title>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+    :root {
+        --primary-color: #ffc107;
+        --bg-dark: #121212;
+        --bg-panel: #1e1e1e;
+        --text-light: #ffffff;
+        --sidebar-width: 300px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body, html { margin: 0; padding: 0; overflow: hidden; background: var(--bg-dark); height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-light); }
+
+    /* Layout Structure */
+    #app-layout { display: flex; height: 100%; width: 100%; }
+    
+    /* Sidebar Styling */
+    #sidebar {
+        width: var(--sidebar-width);
+        background: var(--bg-panel);
+        border-left: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        flex-direction: column;
+        z-index: 20;
+        transition: transform 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,0,0,0.2);
+    }
+
+    #channels-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .channel-item {
+        padding: 15px;
+        margin-bottom: 8px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .channel-item:hover { background: rgba(255,255,255,0.1); }
+    .channel-item.active { background: rgba(255, 193, 7, 0.2); border: 1px solid var(--primary-color); color: var(--primary-color); }
+    .channel-item.error { border-color: #ff6b6b; color: #ff6b6b; }
+
+    /* Main Content (Player) */
+    #main-content {
+        flex: 1;
+        position: relative;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    /* Back Button (Hidden on Desktop usually, shown when needed) */
+    #back-btn-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 50;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: none; /* Hidden by default */
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: background 0.2s;
+    }
+    #back-btn-container:hover { background: rgba(255,255,255,0.2); }
+
+    /* Player Elements */
+    #video { width: 100%; height: 100%; object-fit: contain; }
+    #video-wrapper { width: 100%; height: 100%; position: relative; }
+
+    /* Controls & Overlays (Same as before with minor tweaks) */
+    #loading-spinner {
+        width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.2); border-top-color: var(--primary-color); border-radius: 50%;
+        animation: spin 1s linear infinite; position: absolute; z-index: 100; display: none; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    }
+    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+    #error-overlay { position: absolute; z-index: 90; inset: 0; background: rgba(0,0,0,0.9); color: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    
+    .controls-overlay { position: absolute; z-index: 10; transition: opacity 0.3s; opacity: 0; visibility: hidden; width: 100%; }
+    .controls-overlay.visible { opacity: 1; visibility: visible; }
+
+    #bottom-controls-container { bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); }
+    #center-controls { top: 50%; left: 50%; transform: translate(-50%,-50%); width: auto; }
+    
+    .center-controls-cluster { display: flex; align-items: center; gap: 30px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 15px 30px; border-radius: 50px; }
+    
+    .control-button { background: none; border: none; color: #fff; cursor: pointer; padding: 5px; transition: transform 0.2s; }
+    .control-button:hover { color: var(--primary-color); transform: scale(1.1); }
+    .control-button i { width: 24px; height: 24px; }
+    
+    .progress-bar-container { width: 100%; padding: 10px 0; cursor: pointer; }
+    .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+    .progress-played { width: 0%; height: 100%; background: var(--primary-color); transition: width 0.1s; }
+    
+    .bottom-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+    .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
+
+    /* Settings Menu */
+    #settings-popup { position: absolute; bottom: 80px; left: 20px; width: 220px; background: rgba(20,20,20,0.95); border-radius: 12px; z-index: 25; display: none; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+    .settings-header { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9em; background: rgba(255,255,255,0.05); }
+    .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; font-size: 0.9em; }
+    .menu-item:hover { background: rgba(255,255,255,0.1); }
+    .menu-item-value { margin-right: auto; opacity: 0.7; font-size: 0.85em; }
+
+    /* Toast Notification */
+    #toast-notification {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: rgba(255, 193, 7, 0.9);
+        color: #000;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-weight: bold;
+        font-size: 0.9em;
+        z-index: 200;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    #toast-notification.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    #placeholder-msg { display: flex; flex-direction: column; align-items: center; gap: 15px; opacity: 0.5; }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        #sidebar {
+            position: absolute;
+            width: 100%;
+            z-index: 30;
+            transform: translateX(0);
+        }
+        
+        #sidebar.hidden {
+            transform: translateX(100%); /* Hide to the right */
+        }
+
+        #back-btn-container {
+            display: flex; /* Show back button on mobile when playing */
+        }
+
+        #main-content {
+            width: 100%;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div id="app-layout">
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <i data-feather="tv"></i>
+            <span>قائمة القنوات</span>
+        </div>
+        <div id="channels-list">
+            <!-- Channels will be added here -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <!-- Toast -->
+        <div id="toast-notification">تم تغيير الجودة</div>
+
+        <!-- Back Button -->
+        <div id="back-btn-container">
+            <i data-feather="arrow-right"></i>
+        </div>
+
+        <!-- Placeholder when no video -->
+        <div id="placeholder-msg">
+            <i data-feather="play-circle" style="width: 50px; height: 50px;"></i>
+            <span>اختر قناة للمشاهدة</span>
+        </div>
+
+        <!-- Video Player Wrapper -->
+        <div id="video-wrapper" style="display: none;">
+            <div id="loading-spinner"></div>
+            
+            <div id="error-overlay">
+                <i data-feather="alert-triangle" style="width: 40px; height: 40px; margin-bottom: 10px; color: #ff6b6b;"></i>
+                <h3 id="error-title">خطأ</h3>
+                <p id="error-message">حدث خطأ</p>
+                <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 20px; background: var(--primary-color); border: none; border-radius: 5px; cursor: pointer;">تحديث</button>
+            </div>
+
+            <video id="video" playsinline crossorigin="anonymous"></video>
+
+            <!-- Center Controls -->
+            <div id="center-controls" class="controls-overlay">
+                <div class="center-controls-cluster">
+                    <button class="control-button" id="seek-backward-btn"><i data-feather="rotate-ccw"></i></button>
+                    <button class="control-button" id="play-pause-center-btn"><i data-feather="play"></i></button>
+                    <button class="control-button" id="seek-forward-btn"><i data-feather="rotate-cw"></i></button>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div id="bottom-controls-container" class="controls-overlay">
+                <div class="progress-bar-container">
+                    <div class="progress-bar"><div class="progress-played"></div></div>
+                </div>
+                <div class="bottom-controls">
+                    <div class="controls-right">
+                        <button class="control-button" id="play-pause-btn"><i data-feather="play"></i></button>
+                        <div class="volume-container">
+                            <button class="control-button" id="mute-btn"><i data-feather="volume-2"></i></button>
+                            <input type="range" min="0" max="100" value="100" class="volume-slider" id="volume-slider">
+                        </div>
+                        <div id="time-display-container">00:00</div>
+                    </div>
+                    <div class="controls-left">
+                        <button id="settings-btn" class="control-button"><i data-feather="settings"></i></button>
+                        <button class="control-button" id="fit-screen-btn"><i data-feather="maximize"></i></button>
+                        <button class="control-button" id="fullscreen-btn"><i data-feather="maximize-2"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Popup -->
+            <div id="settings-popup">
+                <div class="settings-header">
+                    <span>الإعدادات</span>
+                    <span class="settings-close-btn" style="cursor: pointer;"><i data-feather="x" style="width: 16px;"></i></span>
+                </div>
+                <div id="settings-content">
+                    <div class="menu-item" id="quality-menu-item">
+                        <i data-feather="layers"></i>
+                        <span>الجودة</span>
+                        <span class="menu-item-value" id="current-quality">Auto</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+    const e = {
+        video: document.getElementById('video'),
+        videoWrapper: document.getElementById('video-wrapper'),
+        sidebar: document.getElementById('sidebar'),
+        channelsList: document.getElementById('channels-list'),
+        backBtn: document.getElementById('back-btn-container'),
+        placeholder: document.getElementById('placeholder-msg'),
+        toast: document.getElementById('toast-notification'),
+        
+        // Controls
+        loadingSpinner: document.getElementById('loading-spinner'),
+        errorOverlay: document.getElementById('error-overlay'),
+        centerControls: document.getElementById('center-controls'),
+        bottomControls: document.getElementById('bottom-controls-container'),
+        playPauseBtn: document.getElementById('play-pause-btn'),
+        playPauseCenterBtn: document.getElementById('play-pause-center-btn'),
+        muteBtn: document.getElementById('mute-btn'),
+        volumeSlider: document.getElementById('volume-slider'),
+        timeDisplay: document.getElementById('time-display-container'),
+        progressBar: document.querySelector('.progress-played'),
+        progressContainer: document.querySelector('.progress-bar-container'),
+        
+        // Settings
+        settingsBtn: document.getElementById('settings-btn'),
+        settingsPopup: document.getElementById('settings-popup'),
+        settingsCloseBtn: document.querySelector('.settings-close-btn'),
+        qualityMenuItem: document.getElementById('quality-menu-item'),
+        currentQuality: document.getElementById('current-quality'),
+        settingsContent: document.getElementById('settings-content'),
+        
+        fullscreenBtn: document.getElementById('fullscreen-btn'),
+        fitScreenBtn: document.getElementById('fit-screen-btn')
+    };
+
+    // Worker URL (Must match your Cloudflare Worker)
+    const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
+
+    const channels = [
+        { name: "beIN Sports 1", url: "http://ibo.lynxiptv.com/live/760495572073/4ZWyUoO4zA/222237.m3u8" },
+        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
+        { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
+        { name: "beIN Sports 4", url: "https://py.dencreak.com/bn_s_fhd4.m3u8" },
+        { name: "beIN Sports 5", url: "https://py.dencreak.com/bn_s_fhd5.m3u8" },
+        { name: "beIN Sports 6", url: "https://py.dencreak.com/bn_s_fhd6.m3u8" },
+        { name: "beIN Sports 7", url: "https://py.dencreak.com/bn_s_fhd7.m3u8" },
+        { name: "beIN Sports 8", url: "https://py.dencreak.com/bn_s_fhd8.m3u8" },
+        { name: "beIN Sports 9", url: "https://py.dencreak.com/bn_s_fhd9.m3u8" },
+        { name: "Alkass 1", url: "https://liveeu-gcp.alkassdigital.net/alkass1-p/main.m3u8" },
+        { name: "Alkass 2", url: "https://liveeu-gcp.alkassdigital.net/alkass2-p/main.m3u8" },
+    ];
+
+    let hls = null;
+    let hlsLevels = [];
+    let controlsTimeout;
+    let isMobile = window.innerWidth <= 768;
+
+    // --- 1. Channel List Logic ---
+    function initChannels() {
+        channels.forEach((channel, index) => {
+            const item = document.createElement('div');
+            item.className = 'channel-item';
+            item.innerHTML = `<i data-feather="play-circle"></i><span>${channel.name}</span>`;
+            item.onclick = () => playChannel(channel, item);
+            e.channelsList.appendChild(item);
+        });
+        feather.replace();
+    }
+
+    function playChannel(channel, itemElement) {
+        // UI Updates
+        document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+        if(itemElement) itemElement.classList.add('active');
+        
+        e.placeholder.style.display = 'none';
+        e.videoWrapper.style.display = 'block';
+        e.errorOverlay.style.display = 'none';
+        e.loadingSpinner.style.display = 'block';
+
+        // Mobile Logic: Hide Sidebar, Show Back Button, Request Fullscreen
+        if (window.innerWidth <= 768) {
+            e.sidebar.classList.add('hidden');
+            e.backBtn.style.display = 'flex';
+            try {
+                if (e.videoWrapper.requestFullscreen) e.videoWrapper.requestFullscreen();
+                else if (e.videoWrapper.webkitRequestFullscreen) e.videoWrapper.webkitRequestFullscreen();
+            } catch(err) { console.log("Fullscreen request failed", err); }
+        }
+
+        loadStream(channel.url);
+    }
+
+    function closePlayer() {
+        // Stop Video
+        e.video.pause();
+        e.video.src = "";
+        if (hls) hls.destroy();
+        
+        // UI Reset
+        e.videoWrapper.style.display = 'none';
+        e.placeholder.style.display = 'flex';
+        e.backBtn.style.display = 'none';
+        e.sidebar.classList.remove('hidden');
+        
+        // Exit Fullscreen if active
+        if (document.fullscreenElement) document.exitFullscreen();
+    }
+
+    e.backBtn.onclick = closePlayer;
+
+    // --- 2. HLS & Video Logic ---
+    function loadStream(url) {
+        if (hls) hls.destroy();
+        
+        // Use Proxy for all streams to ensure consistency
+        const proxiedUrl = corsProxy + url;
+        console.log("Loading:", proxiedUrl);
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: true,
+                xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
+            });
+            
+            hls.loadSource(proxiedUrl);
+            hls.attachMedia(e.video);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                hlsLevels = hls.levels;
+                updateQualityLabel(-1); // Auto
+                e.video.play().catch(() => {/* Autoplay prevented */});
+            });
+
+            hls.on(Hls.Events.LEVEL_LOADED, () => {
+                e.loadingSpinner.style.display = 'none';
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error("Network Error", data);
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.error("Media Error", data);
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            showError("فشل تحميل البث");
+                            break;
+                    }
+                }
+            });
+        } else if (e.video.canPlayType('application/vnd.apple.mpegurl')) {
+            e.video.src = proxiedUrl;
+            e.video.addEventListener('loadedmetadata', () => {
+                e.video.play();
+                e.loadingSpinner.style.display = 'none';
+            });
+        }
+    }
+
+    function showError(msg) {
+        e.loadingSpinner.style.display = 'none';
+        e.errorOverlay.style.display = 'flex';
+        document.getElementById('error-message').textContent = msg;
+    }
+
+    // --- 3. Quality & Settings Logic ---
+    function updateQualityLabel(levelIndex) {
+        let text = "Auto";
+        if (levelIndex !== -1 && hlsLevels[levelIndex]) {
+            const lvl = hlsLevels[levelIndex];
+            text = lvl.height ? `${lvl.height}p` : `${Math.round(lvl.bitrate/1000)}k`;
+        }
+        e.currentQuality.textContent = text;
+        return text;
+    }
+
+    function showQualityToast(text) {
+        e.toast.textContent = `تم اختيار: ${text}`;
+        e.toast.classList.add('show');
+        setTimeout(() => {
+            e.toast.classList.remove('show');
+        }, 1000); // Hide after 1 second
+    }
+
+    e.settingsBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        e.settingsPopup.style.display = e.settingsPopup.style.display === 'block' ? 'none' : 'block';
+    };
+
+    e.settingsCloseBtn.onclick = () => e.settingsPopup.style.display = 'none';
+
+    e.qualityMenuItem.onclick = () => {
+        if (!hls) return;
+        
+        // Build Quality List dynamically
+        const listContainer = document.createElement('div');
+        listContainer.style.background = "#1e1e1e";
+        listContainer.innerHTML = `
+            <div style="padding:10px; border-bottom:1px solid #333; cursor:pointer; display:flex; align-items:center;" onclick="goBackSettings()">
+                <i data-feather="arrow-left" style="width:16px; margin-left:8px;"></i> رجوع
+            </div>
+        `;
+
+        // Add Auto Option
+        addQualityOption(listContainer, -1, "تلقائي (Auto)");
+
+        // Add Levels
+        hlsLevels.forEach((lvl, idx) => {
+            const label = lvl.height ? `${lvl.height}p` : `Level ${idx}`;
+            addQualityOption(listContainer, idx, label);
+        });
+
+        // Replace content temporarily
+        const oldContent = e.settingsContent.innerHTML;
+        e.settingsContent.innerHTML = "";
+        e.settingsContent.appendChild(listContainer);
+        feather.replace();
+
+        // Helper to handle back logic
+        window.goBackSettings = () => {
+            e.settingsContent.innerHTML = oldContent;
+            // Re-attach event listener since innerHTML wiped it
+            document.getElementById('quality-menu-item').onclick = e.qualityMenuItem.onclick;
+            feather.replace();
+        };
+    };
+
+    function addQualityOption(container, levelIndex, label) {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `<span>${label}</span> ${hls.currentLevel === levelIndex ? '<i data-feather="check" style="width:14px; color:var(--primary-color);"></i>' : ''}`;
+        div.onclick = () => {
+            hls.currentLevel = levelIndex;
+            const newLabel = updateQualityLabel(levelIndex);
+            showQualityToast(newLabel); // Show Toast
+            e.settingsPopup.style.display = 'none'; // Close menu
+            // Restore main menu for next time
+            window.goBackSettings(); 
+        };
+        container.appendChild(div);
+    }
+
+    // --- 4. Controls UI Logic ---
+    function showControls() {
+        [e.centerControls, e.bottomControls].forEach(el => el.classList.add('visible'));
+        e.videoWrapper.style.cursor = "default";
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(() => {
+            if (!e.video.paused && e.settingsPopup.style.display !== 'block') {
+                [e.centerControls, e.bottomControls].forEach(el => el.classList.remove('visible'));
+                e.videoWrapper.style.cursor = "none";
+            }
+        }, 3000);
+    }
+
+    e.videoWrapper.onmousemove = showControls;
+    e.videoWrapper.ontouchstart = showControls;
+    e.videoWrapper.onclick = (e) => {
+        // Toggle play if clicking video directly (not controls)
+        if (e.target === e.video || e.target === document.querySelector('.controls-overlay')) {
+            togglePlay();
+        }
+    }
+
+    function togglePlay() {
+        if (e.video.paused) e.video.play();
+        else e.video.pause();
+        updatePlayIcons();
+    }
+
+    function updatePlayIcons() {
+        const icon = e.video.paused ? "play" : "pause";
+        e.playPauseBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+        e.playPauseCenterBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+        feather.replace();
+    }
+
+    e.playPauseBtn.onclick = togglePlay;
+    e.playPauseCenterBtn.onclick = togglePlay;
+
+    // --- Fullscreen & Fit ---
+    e.fullscreenBtn.onclick = () => {
+        if (!document.fullscreenElement) e.videoWrapper.requestFullscreen();
+        else document.exitFullscreen();
+    };
+
+    e.fitScreenBtn.onclick = () => {
+        const fit = e.video.style.objectFit === "cover" ? "contain" : "cover";
+        e.video.style.objectFit = fit;
+        showQualityToast(fit === "cover" ? "ملء الشاشة" : "احتواء");
+    };
+
+    // --- Init ---
+    initChannels();
+    feather.replace();
+    
+    // Handle Window Resize
+    window.onresize = () => {
+        isMobile = window.innerWidth <= 768;
+        if (!isMobile) {
+            e.sidebar.classList.remove('hidden');
+            e.backBtn.style.display = 'none';
+        } else if (!e.video.paused) {
+            e.sidebar.classList.add('hidden');
+            e.backBtn.style.display = 'flex';
+        }
+    };
+});
+</script>
+</body>
+</html>
