@@ -177,7 +177,7 @@ window.addEventListener('load', function() {
     // قنوات بي إن سبورت فقط
     const channels = [
         { name: "beIN Sports 1", url: "http://135.125.109.73:9000/beinsport1_.m3u8" },
-        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8" },
+        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
         { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
         { name: "beIN Sports 4", url: "https://py.dencreak.com/bn_s_fhd4.m3u8" },
         { name: "beIN Sports 5", url: "https://py.dencreak.com/bn_s_fhd5.m3u8" },
@@ -234,8 +234,12 @@ window.addEventListener('load', function() {
     async function loadVideo(channelUrl, channelElement = null) {
         if (!channelUrl) return;
 
-        if (corsProxy && channelUrl.startsWith('http://') && window.location.protocol === 'https:') {
-            console.log("Using proxy for HTTP stream:", channelUrl);
+        // ========================================================
+        // التعديل هنا: تمرير جميع الروابط عبر البروكسي (HTTP و HTTPS)
+        // لحل مشكلة CORS و Mixed Content معاً
+        // ========================================================
+        if (corsProxy) {
+            console.log("Using proxy for stream:", channelUrl);
             channelUrl = corsProxy + channelUrl;
         }
 
@@ -305,9 +309,6 @@ window.addEventListener('load', function() {
                         case Hls.ErrorTypes.NETWORK_ERROR:
                             if (channelElement) channelElement.classList.add('error');
                             let errorMsg = "تعذر الاتصال بالبث.";
-                            if(window.location.protocol === 'https:' && channelUrl.startsWith('http:') && !corsProxy) {
-                                errorMsg = "خطأ أمني: لا يمكن تشغيل رابط HTTP على موقع HTTPS.";
-                            }
                             a("خطأ في الشبكة", errorMsg);
                             n.startLoad();
                             break;
