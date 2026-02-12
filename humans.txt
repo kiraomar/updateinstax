@@ -1,6 +1,0 @@
-/* TEAM */
-Developer: Mohamed Ahmed
-Twitter: @MohamedDev
-
-/* SITE */
-Last update: 2025/05/13
