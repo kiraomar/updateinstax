@@ -22,7 +22,9 @@
         display: flex; align-items: center; justify-content: center;
         color: white; cursor: pointer; backdrop-filter: blur(5px);
         text-decoration: none; /* مهم لأننا سنستخدمه كرابط a */
+        transition: background 0.3s;
     }
+    #back-btn:hover { background: rgba(255,255,255,0.2); }
     
     #channel-title {
         position: absolute; top: 20px; left: 20px; z-index: 50;
@@ -31,12 +33,16 @@
         backdrop-filter: blur(5px);
     }
 
-    /* Controls Overlay (Simplified for Separate Page) */
-    .controls-overlay { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 20; transition: opacity 0.3s; }
+    /* Controls Overlay */
+    .controls-overlay { 
+        position: absolute; bottom: 0; width: 100%; padding: 20px; 
+        background: linear-gradient(transparent, rgba(0,0,0,0.9)); 
+        z-index: 20; transition: opacity 0.3s; 
+    }
     .controls-overlay.hidden { opacity: 0; pointer-events: none; }
     
-    .control-btn { background: none; border: none; color: white; cursor: pointer; margin: 0 10px; }
-    .control-btn:hover { color: var(--primary-color); }
+    .control-btn { background: none; border: none; color: white; cursor: pointer; margin: 0 10px; transition: transform 0.2s; }
+    .control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
 
     #loading-spinner {
         width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: var(--primary-color);
@@ -105,7 +111,7 @@
 
     // إعدادات المتغيرات
     const video = document.getElementById('video');
-    const corsProxy = 'https://primetv.omao18193.workers.dev/'; // <--- الرابط موجود هنا
+    const corsProxy = 'https://primetv.omao18193.workers.dev/'; // رابط الووركر الخاص بك
     const loading = document.getElementById('loading-spinner');
     const errorMsg = document.getElementById('error-msg');
     const toast = document.getElementById('toast');
@@ -116,14 +122,13 @@
     // تحديث اسم القناة
     if (streamName) document.getElementById('channel-title').textContent = streamName;
 
-    // دالة التشغيل الرئيسية
+    // دالة التشغيل الرئيسية (نسخة محسنة للسرعة)
     function initPlayer() {
         if (!streamUrl) {
             showError("لم يتم العثور على رابط القناة");
             return;
         }
 
-        // دمج البروكسي مع الرابط
         const finalUrl = corsProxy + streamUrl;
         console.log("Playing:", finalUrl);
 
@@ -132,6 +137,20 @@
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: true,
+                
+                // تحسينات التخزين المؤقت (Buffering) لمنع التقطيع
+                maxBufferLength: 30,        // زيادة البفر إلى 30 ثانية
+                maxMaxBufferLength: 60,     // الحد الأقصى 60 ثانية
+                backBufferLength: 90,       // الاحتفاظ بـ 90 ثانية سابقة
+                
+                // إعدادات الشبكة والمرونة
+                manifestLoadingTimeOut: 10000,
+                manifestLoadingMaxRetry: 4,
+                levelLoadingTimeOut: 10000,
+                levelLoadingMaxRetry: 4,
+                fragLoadingTimeOut: 20000,
+                fragLoadingMaxRetry: 6,
+                
                 xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
             });
 
@@ -151,10 +170,11 @@
                 if (data.fatal) {
                     switch (data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.log("Network error, retrying...");
+                            console.log("Network error, trying to recover...");
                             hls.startLoad();
                             break;
                         case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log("Media error, recovering...");
                             hls.recoverMediaError();
                             break;
                         default:
