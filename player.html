@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html dir='rtl'>
+<head>
+<meta charset='UTF-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Video Player</title>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+    :root { --primary-color: #ffc107; }
+    body, html { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; width: 100%; font-family: sans-serif; }
+    
+    #video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+
+    /* UI Elements */
+    #back-btn {
+        position: absolute; top: 20px; right: 20px; z-index: 50;
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
+        width: 45px; height: 45px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; cursor: pointer; backdrop-filter: blur(5px);
+        text-decoration: none; /* مهم لأننا سنستخدمه كرابط a */
+    }
+    
+    #channel-title {
+        position: absolute; top: 20px; left: 20px; z-index: 50;
+        color: white; background: rgba(0,0,0,0.6); padding: 8px 15px;
+        border-radius: 20px; font-weight: bold; pointer-events: none;
+        backdrop-filter: blur(5px);
+    }
+
+    /* Controls Overlay (Simplified for Separate Page) */
+    .controls-overlay { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 20; transition: opacity 0.3s; }
+    .controls-overlay.hidden { opacity: 0; pointer-events: none; }
+    
+    .control-btn { background: none; border: none; color: white; cursor: pointer; margin: 0 10px; }
+    .control-btn:hover { color: var(--primary-color); }
+
+    #loading-spinner {
+        width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: var(--primary-color);
+        border-radius: 50%; position: absolute; animation: spin 1s linear infinite; z-index: 10;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+        position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+        background: var(--primary-color); color: #000; padding: 8px 20px;
+        border-radius: 20px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 60;
+    }
+
+    #error-msg { position: absolute; color: #ff6b6b; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; display: none; text-align: center; z-index: 100; }
+
+    /* Settings Menu */
+    #settings-menu {
+        position: absolute; bottom: 80px; left: 20px; background: rgba(20,20,20,0.95);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 200px;
+        display: none; z-index: 30; overflow: hidden;
+    }
+    .menu-item { padding: 12px 15px; color: white; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 0.9em; }
+    .menu-item:hover { background: rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+
+<div id="video-container">
+    <div id="loading-spinner"></div>
+    <div id="error-msg">حدث خطأ في التشغيل</div>
+    <div id="toast"></div>
+    <div id="channel-title">جاري التحميل...</div>
+
+    <!-- زر الرجوع للصفحة الرئيسية -->
+    <a href="index.html" id="back-btn">
+        <i data-feather="arrow-right"></i>
+    </a>
+
+    <video id="video" autoplay playsinline crossorigin="anonymous"></video>
+
+    <!-- Controls -->
+    <div id="controls" class="controls-overlay">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <button class="control-btn" id="settings-btn"><i data-feather="settings"></i></button>
+                <button class="control-btn" id="fullscreen-btn"><i data-feather="maximize"></i></button>
+            </div>
+            <div>
+                <button class="control-btn" id="play-btn"><i data-feather="pause"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings-menu">
+        <div style="padding: 10px; background: rgba(255,255,255,0.05); font-weight: bold; color: #ddd; text-align: center;">الجودة</div>
+        <div id="quality-list"></div>
+    </div>
+</div>
+
+<script>
+    // 1. استخراج البيانات من الرابط
+    const urlParams = new URLSearchParams(window.location.search);
+    const streamUrl = urlParams.get('url');
+    const streamName = urlParams.get('name');
+
+    // إعدادات المتغيرات
+    const video = document.getElementById('video');
+    const corsProxy = 'https://primetv.omao18193.workers.dev/'; // <--- الرابط موجود هنا
+    const loading = document.getElementById('loading-spinner');
+    const errorMsg = document.getElementById('error-msg');
+    const toast = document.getElementById('toast');
+    let hls = null;
+    let hlsLevels = [];
+    let controlsTimeout;
+
+    // تحديث اسم القناة
+    if (streamName) document.getElementById('channel-title').textContent = streamName;
+
+    // دالة التشغيل الرئيسية
+    function initPlayer() {
+        if (!streamUrl) {
+            showError("لم يتم العثور على رابط القناة");
+            return;
+        }
+
+        // دمج البروكسي مع الرابط
+        const finalUrl = corsProxy + streamUrl;
+        console.log("Playing:", finalUrl);
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: true,
+                xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
+            });
+
+            hls.loadSource(finalUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                hlsLevels = hls.levels;
+                video.play().catch(e => console.log("Auto-play blocked", e));
+            });
+
+            hls.on(Hls.Events.LEVEL_LOADED, () => {
+                loading.style.display = 'none';
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log("Network error, retrying...");
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            showError("فشل تشغيل القناة");
+                            break;
+                    }
+                }
+            });
+
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari support
+            video.src = finalUrl;
+            video.addEventListener('loadedmetadata', () => {
+                video.play();
+                loading.style.display = 'none';
+            });
+        }
+    }
+
+    // واجهة المستخدم (UI Functions)
+    function showError(msg) {
+        loading.style.display = 'none';
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = msg;
+    }
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', 1000);
+    }
+
+    // التحكم (Controls)
+    const controls = document.getElementById('controls');
+    const playBtn = document.getElementById('play-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsMenu = document.getElementById('settings-menu');
+
+    // إخفاء/إظهار التحكم
+    function showControls() {
+        controls.classList.remove('hidden');
+        document.body.style.cursor = 'default';
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(() => {
+            if (!video.paused && settingsMenu.style.display !== 'block') {
+                controls.classList.add('hidden');
+                document.body.style.cursor = 'none';
+            }
+        }, 3000);
+    }
+
+    document.body.addEventListener('mousemove', showControls);
+    document.body.addEventListener('touchstart', showControls);
+    document.body.addEventListener('click', showControls);
+
+    // Play/Pause
+    playBtn.onclick = () => {
+        if (video.paused) {
+            video.play();
+            playBtn.innerHTML = '<i data-feather="pause"></i>';
+        } else {
+            video.pause();
+            playBtn.innerHTML = '<i data-feather="play"></i>';
+        }
+        feather.replace();
+    };
+
+    // Fullscreen
+    document.getElementById('fullscreen-btn').onclick = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.log(e));
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    // Settings (Quality)
+    settingsBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (settingsMenu.style.display === 'block') {
+            settingsMenu.style.display = 'none';
+            return;
+        }
+        
+        // بناء القائمة
+        const list = document.getElementById('quality-list');
+        list.innerHTML = '';
+        
+        // خيار Auto
+        addQualityOption(list, -1, 'Auto');
+        
+        // باقي الجودات
+        if (hlsLevels.length > 0) {
+            hlsLevels.forEach((lvl, index) => {
+                const label = lvl.height ? `${lvl.height}p` : `Level ${index}`;
+                addQualityOption(list, index, label);
+            });
+        } else {
+            list.innerHTML += '<div class="menu-item" style="cursor:default">لا توجد خيارات</div>';
+        }
+        
+        settingsMenu.style.display = 'block';
+    };
+
+    function addQualityOption(container, index, label) {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        // إضافة علامة صح إذا كانت هذه الجودة مختارة
+        const isSelected = hls && hls.currentLevel === index;
+        div.innerHTML = `<span>${label}</span> ${isSelected ? '<i data-feather="check" style="width:14px;color:var(--primary-color)"></i>' : ''}`;
+        
+        div.onclick = () => {
+            if (hls) hls.currentLevel = index;
+            showToast(`تم اختيار: ${label}`);
+            settingsMenu.style.display = 'none';
+        };
+        container.appendChild(div);
+        feather.replace();
+    }
+
+    // إخفاء القائمة عند النقر خارجها
+    document.addEventListener('click', (e) => {
+        if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+            settingsMenu.style.display = 'none';
+        }
+    });
+
+    // تشغيل الأيقونات والبدء
+    feather.replace();
+    initPlayer();
+
+</script>
+</body>
+</html>
