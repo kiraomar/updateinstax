@@ -174,17 +174,17 @@ window.addEventListener('load', function() {
 
     const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
 
-    // قنوات بي إن سبورت فقط
+    // تم تحديث الروابط لاستخدام supertv.gg الذي يعمل معك بنجاح مع البروكسي
     const channels = [
-        { name: "beIN Sports 1", url: "http://135.125.109.73:9000/beinsport1_.m3u8" },
-        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
-        { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
-        { name: "beIN Sports 4", url: "https://py.dencreak.com/bn_s_fhd4.m3u8" },
-        { name: "beIN Sports 5", url: "https://py.dencreak.com/bn_s_fhd5.m3u8" },
-        { name: "beIN Sports 6", url: "https://py.dencreak.com/bn_s_fhd6.m3u8" },
-        { name: "beIN Sports 7", url: "https://py.dencreak.com/bn_s_fhd7.m3u8" },
-        { name: "beIN Sports 8", url: "https://py.dencreak.com/bn_s_fhd8.m3u8" },
-        { name: "beIN Sports 9", url: "https://py.dencreak.com/bn_s_fhd9.m3u8" }
+        { name: "beIN Sports 1", url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8" },
+        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv2/ch2/adaptive.m3u8" },
+        { name: "beIN Sports 3", url: "https://stream.supertv.gg:3002/supertv/sport/stv3/ch3/adaptive.m3u8" },
+        { name: "beIN Sports 4", url: "https://stream.supertv.gg:3002/supertv/sport/stv4/ch4/adaptive.m3u8" },
+        { name: "beIN Sports 5", url: "https://stream.supertv.gg:3002/supertv/sport/stv5/ch5/adaptive.m3u8" },
+        { name: "beIN Sports 6", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
+        { name: "beIN Sports 7", url: "https://stream.supertv.gg:3002/supertv/sport/stv7/ch7/adaptive.m3u8" },
+        { name: "beIN Sports 8", url: "https://stream.supertv.gg:3002/supertv/sport/stv8/ch8/adaptive.m3u8" },
+        { name: "beIN Sports 9", url: "https://stream.supertv.gg:3002/supertv/sport/stv9/ch9/adaptive.m3u8" }
     ];
 
     let t, n, o = false, i = [], l = !1;
@@ -235,8 +235,7 @@ window.addEventListener('load', function() {
         if (!channelUrl) return;
 
         // ========================================================
-        // التعديل هنا: تمرير جميع الروابط عبر البروكسي (HTTP و HTTPS)
-        // لحل مشكلة CORS و Mixed Content معاً
+        // تم تفعيل البروكسي لجميع القنوات لضمان عمل سيرفر supertv
         // ========================================================
         if (corsProxy) {
             console.log("Using proxy for stream:", channelUrl);
