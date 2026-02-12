@@ -1,502 +1,888 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Filxpro - بث مباشر</title>
-  <!-- Fonts & Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-   <link rel="stylesheet" href="Filxpr-css.css">
-   <link rel="stylesheet" href="Filxpro-css-v2.css">
-  <link rel="stylesheet" href="player.css">
-  <title>Filxpro | خدمات رقمية مبتكرة وحلول تقنية متكاملة</title>
-
-<meta name="description" content="Filxpro منصة تقدم خدمات رقمية احترافية تشمل تصميم المواقع، شحن الألعاب، حلول برمجية، والمزيد بأسلوب عصري وتقنيات متقدمة.">
-<meta name="keywords" content="Filxpro, تصميم مواقع, شحن ألعاب, تطوير, خدمات رقمية, تسويق إلكتروني, تقنيات الويب">
-<meta name="robots" content="index, follow">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXX-X"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'UA-XXXXXXX-X');
-</script>
-<link rel="manifest" href="manifest.json">
-<link rel="author" href="/humans.txt">
-<meta name="msapplication-config" content="/browserconfig.xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>VEO CAST</title>
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <style>
+    :root {
+      --primary-color: #d4af37;
+      --secondary-color: #1a1a1a;
+      --accent-color: #ff6b6b;
+      --dark-bg: #0f0f0f;
+      --light-bg: #1c1c1c;
+      --card-bg: #1a1a1a;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, var(--dark-bg), var(--light-bg));
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    
+    header {
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      border-bottom: 2px solid var(--primary-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .video-container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 20px auto;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transform: perspective(1000px) rotateX(0deg);
+      transition: transform 0.5s ease;
+    }
+    
+    .video-container:hover {
+      transform: perspective(1000px) rotateX(5deg);
+    }
+    
+    .video-section {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* نسبة 16:9 */
+      background: #000;
+    }
+    
+    .video-js {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: all 0.3s;
+    }
+    
+    /* تحسينات مشغل الفيديو */
+    .vjs-tech {
+      object-fit: fill !important;
+    }
+    
+    .vjs-fullscreen {
+      width: 100% !important;
+      height: 100% !important;
+      padding-top: 0 !important;
+    }
+    
+    .vjs-control-bar {
+      background: rgba(0,0,0,0.7) !important;
+      height: 3.5em !important;
+    }
+    
+    .vjs-button > .vjs-icon-placeholder:before {
+      line-height: 2.3 !important;
+    }
+    
+    .vjs-volume-panel {
+      order: 1 !important;
+    }
+    
+    .vjs-play-control {
+      order: 2 !important;
+    }
+    
+    .vjs-progress-control {
+      order: 3 !important;
+      width: 100% !important;
+      position: absolute !important;
+      bottom: 3.5em !important;
+      left: 0 !important;
+    }
+    
+    .vjs-time-control {
+      order: 4 !important;
+    }
+    
+    .vjs-fullscreen-control {
+      order: 5 !important;
+    }
+    
+    .channel-name {
+      text-align: center;
+      font-size: 22px;
+      margin: 15px 0;
+      color: var(--primary-color);
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .channel-name::after {
+      content: '';
+      display: block;
+      width: 50px;
+      height: 3px;
+      background: var(--primary-color);
+      margin: 5px auto;
+      border-radius: 3px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .custom-dropdown {
+      position: relative;
+      width: 200px;
+      margin: 20px auto;
+      text-align: center;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .dropdown-header {
+      padding: 12px 20px;
+      background: rgba(26, 26, 26, 0.8);
+      color: white;
+      border: 1px solid var(--primary-color);
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+      transition: all 0.3s;
+    }
+    
+    .dropdown-header:hover {
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .dropdown-options {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(26, 26, 26, 0.95);
+      border: 1px solid var(--primary-color);
+      border-radius: 10px;
+      margin-top: 5px;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease-out;
+      z-index: 100;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .dropdown-options.show {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .dropdown-option {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .dropdown-option:hover {
+      background: rgba(212, 175, 55, 0.2);
+      color: var(--primary-color);
+    }
+    
+    .dropdown-option.active {
+      background: rgba(212, 175, 55, 0.3);
+      color: var(--primary-color);
+    }
+    
+    .category-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding: 15px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 5;
+    }
+    
+    .category-tab {
+      padding: 10px 25px;
+      background: rgba(26, 26, 26, 0.7);
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .category-tab::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+      transition: all 0.6s;
+    }
+    
+    .category-tab:hover::before {
+      left: 100%;
+    }
+    
+    .category-tab.active {
+      background: var(--primary-color);
+      color: #000;
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(212, 175, 55, 0.4);
+    }
+    
+    .channel-list {
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      padding: 15px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .channel-list.active {
+      display: flex;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .channel-card {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(145deg, #1e1e1e, #171717);
+      border-radius: 15px;
+      padding: 15px;
+      gap: 15px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .channel-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-color);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    
+    .channel-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    
+    .channel-card:hover::after {
+      transform: scaleX(1);
+    }
+    
+    .channel-card img {
+      width: 80px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      transition: all 0.3s;
+    }
+    
+    .channel-card:hover img {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    }
+    
+    .channel-card .title {
+      font-size: 16px;
+      font-weight: bold;
+      flex-grow: 1;
+      position: relative;
+    }
+    
+    .channel-card .title::after {
+      content: '▶';
+      position: absolute;
+      right: -25px;
+      color: var(--primary-color);
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    
+    .channel-card:hover .title::after {
+      right: -20px;
+      opacity: 1;
+    }
+    
+    .error-message {
+      color: var(--accent-color);
+      text-align: center;
+      margin: 15px 0;
+      display: none;
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+      animation: shake 0.5s;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
+    /* تعديلات للهواتف */
+    @media (max-width: 768px) {
+      header {
+        font-size: 18px;
+        padding: 15px;
+      }
+      
+      .video-container {
+        width: 98%;
+        margin: 10px auto;
+      }
+      
+      .channel-name {
+        font-size: 18px;
+      }
+      
+      .category-tabs {
+        gap: 8px;
+        padding: 10px;
+      }
+      
+      .category-tab {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
+      
+      .channel-card {
+        padding: 10px;
+        gap: 10px;
+      }
+      
+      .channel-card img {
+        width: 60px;
+        height: 45px;
+      }
+      
+      .channel-card .title {
+        font-size: 14px;
+      }
+      
+      .custom-dropdown {
+        width: 90%;
+      }
+      
+      .vjs-control-bar {
+        height: 3em !important;
+      }
+    }
+    /* إزالة لون الضغط على العناصر */
+* {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+  </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <a href="#" class="navbar-brand">
-
-      <span>Filxpro</span>
-    </a>
-    <div class="navbar-controls">
-      <button class="nav-btn">
-        <i class="fas fa-search"></i>
-      </button>
-     
-      <button class="nav-btn" id="menu-btn">
-        <i class="fas fa-bars"></i>
-      </button>
+    <header>
+       V E O ㅤㅤC A S T
+  </header>
+  
+  <div class="video-container animate__animated animate__fadeIn">
+    <div class="video-section">
+      <video id="video" class="video-js vjs-default-skin" controls autoplay muted playsinline></video>
     </div>
-  </nav>
-
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h3>تصفح القنوات</h3>
+  </div>
+  
+  <div class="error-message" id="errorMessage"></div>
+  
+  <div class="channel-name animate__animated animate__fadeIn" id="currentChannelName">اختر قناة من الأسفل</div>
+  
+  <div class="custom-dropdown animate__animated animate__fadeIn" id="qualityDropdown">
+    <div class="dropdown-header" onclick="toggleDropdown()">
+      <span id="selectedQuality">LOW</span>
+      <i class="fas fa-chevron-down"></i>
     </div>
-    <nav class="sidebar-nav">
-      <a href="#بين سبورت" class="nav-item active">
-        <i class="fas fa-tv"></i>
-        <span>بين سبورت <small>أهم القنوات الرياضية</small></span>
-      </a>
-      <a href="#SSC" class="nav-item">
-        <i class="fas fa-futbol"></i>
-        <span>SSC <small>مباريات مباشرة وتحليلات</small></span>
-      </a>
-     
-      <a href="#روتانا" class="nav-item">
-        <i class="fas fa-music"></i>
-        <span>روتانا <small>أغاني وفيديو كليبات</small></span>
-      </a>
-      <a href="#MBC" class="nav-item">
-        <i class="fas fa-film"></i>
-        <span>MBC <small>مسلسلات وبرامج منوعة</small></span>
-      </a>
-
-      </a>
-    </nav>
-  </aside>
-
-<!-- Main Content -->
-<main class="main">
-  <!-- بين سبورت Section -->
-  <section class="section" id="section-بين سبورت">
-    <div class="section-header">
-      <span class="badge">مباشر</span>
-      <h2>بين سبورت</h2>
+    <div class="dropdown-options" id="dropdownOptions">
+      <div class="dropdown-option" onclick="selectQuality('low', 'LOW')">LOW</div>
+      <div class="dropdown-option" onclick="selectQuality('sd', 'SD')">SD</div>
+      <div class="dropdown-option active" onclick="selectQuality('hd', 'HD')">HD</div>
+      <div class="dropdown-option" onclick="selectQuality('fhd', 'FHD')">FHD</div>
+      <div class="dropdown-option" onclick="selectQuality('4k', '4K')">4K</div>
     </div>
-    <div class="channels-slider">
-      <div class="slider-container" id="بين سبورت">
-        <!-- بين سبورت 1 -->
-        1
-        <a href="b1.html" class="channel-link">
-          <div class="channel-card shape-1 color-1">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 1" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 1</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
+  </div>
+  
+  <div class="category-tabs animate__animated animate__fadeIn">
+    <div class="category-tab active" data-category="bein">beIN SPORTS</div>
+    <div class="category-tab" data-category="alkass">Al Kass SPORTS</div>
+    <div class="category-tab" data-category="ssc">SSC SPORTS</div>
+  </div>
+  
+  <div class="channel-list active animate__animated animate__fadeIn" id="bein-channels"></div>
+  <div class="channel-list" id="alkass-channels"></div>
+  <div class="channel-list" id="ssc-channels"></div>
+
+  <script>
+    // ============ حل مشكلة "The media could not be loaded" ============
+    function handlePlayerError(player) {
+      player.on("error", function() {
+        const error = player.error();
+        let errorMessage = "حدث خطأ في تحميل البث";
         
-        <!-- بين سبورت 2 -->
-        2
-        <a href="#" class="channel-link">
-          <div class="channel-card shape-2 color-2">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 2" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 2</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
+      
         
-        <!-- بين سبورت 3 -->
-        3
-        <a href="#" class="channel-link">
-          <div class="channel-card shape-3 color-3">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 3" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 3</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
+        showError(errorMessage);
         
-        <!-- بين سبورت 4 -->
-        4
-        <a href="#" class="channel-link">
-          <div class="channel-card shape-4 color-4">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 4" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 4</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
-        
-        <!-- بين سبورت 5 -->
-        5
-        <a href="#" class="channel-link">
-          <div class="channel-card shape-1 color-5">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 5" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 5</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
-        
-        <!-- بين سبورت 6 -->
-        6
-        <a href="#" class="channel-link">
-          <div class="channel-card shape-2 color-6">
-            <span class="channel-live">
-              <span>مباشر</span>
-            </span>
-            <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 6" class="channel-img">
-            <div class="channel-overlay">
-              <div class="channel-name">بين سبورت 6</div>
-              <span class="channel-quality">HD</span>
-            </div>
-          </div>
-        </a>
-       7
-        <a href="b1.html" class="channel-link">
-   <div class="channel-card shape-1 color-1">
-     <span class="channel-live">
-       <span>مباشر</span>
-     </span>
-     <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 1" class="channel-img">
-     <div class="channel-overlay">
-       <div class="channel-name">بين سبورت 1</div>
-       <span class="channel-quality">HD</span>
-     </div>
-   </div>
- </a>
-     
-    8
-     <a href="b1.html" class="channel-link">
-   <div class="channel-card shape-1 color-1">
-     <span class="channel-live">
-       <span>مباشر</span>
-     </span>
-     <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 1" class="channel-img">
-     <div class="channel-overlay">
-       <div class="channel-name">بين سبورت 1</div>
-       <span class="channel-quality">HD</span>
-     </div>
-   </div>
- </a>
-      9<a href="b1.html" class="channel-link">
-   <div class="channel-card shape-1 color-1">
-     <span class="channel-live">
-       <span>مباشر</span>
-     </span>
-     <img src="https://i.imgur.com/GkRyK3c.png" alt="بين سبورت 1" class="channel-img">
-     <div class="channel-overlay">
-       <div class="channel-name">بين سبورت 1</div>
-       <span class="channel-quality">HD</span>
-     </div>
-   </div>
- </a>
- 
-      </div>
-    </div>
-  </section>
-   <!-- SSC Section -->
-<section class="section" id="section-SSC">
-  <div class="section-header">
-    <span class="badge">مباشر</span>
-    <h2>SSC</h2>
-  </div>
-  <div class="channels-slider">
-    <div class="slider-container" id="SSC">
-      
-      <!-- SSC 1 -->
-      <a href="ssc1.html" class="channel-link">
-        <div class="channel-card shape-1 color-1">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/Hw7bYjT.png" alt="SSC 1" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">SSC 1</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- SSC 2 -->
-      <a href="ssc2.html" class="channel-link">
-        <div class="channel-card shape-2 color-2">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/Hw7bYjT.png" alt="SSC 2" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">SSC 2</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- SSC 3 -->
-      <a href="ssc3.html" class="channel-link">
-        <div class="channel-card shape-3 color-3">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/Hw7bYjT.png" alt="SSC 3" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">SSC 3</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- SSC 4 -->
-      <a href="ssc4.html" class="channel-link">
-        <div class="channel-card shape-4 color-4">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/Hw7bYjT.png" alt="SSC 4" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">SSC 4</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-    </div>
-  </div>
-</section>
+        // إعادة المحاولة بعد 5 ثواني
+        setTimeout(() => {
+          if (currentChannel) {
+            loadChannel(currentChannel.id, currentChannel.category);
+          }
+        }, 5000);
+      });
+    }
+    
+    // ============ جميع القنوات والجودات ============
+    const channelsDB = {
+      bein: {
+        bein1: {
+          name: "BeIN Sports 1",
+          image: "https://i.ibb.co/5hTNGxd3/image.jpg",
+          sources: {
+            low: "https://primetv.omao18193.workers.dev/?url=http://tv.startseven.tn:2052/09746171/15445345/179.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40837.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31542.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31542.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18088.m3u8"
+          }
+        },
+        bein2: {
+          name: "BeIN Sports 2",
+          image: "https://i.ibb.co/dwhbSS9g/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44563.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40838.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31543.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31543.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18087.m3u8"
+          }
+        },
+        bein3: {
+          name: "BeIN Sports 3",
+          image: "https://i.ibb.co/9HXNtwKn/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44564.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40839.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31544.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31544.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18086.m3u8"
+          }
+        },
+        bein4: {
+          name: "BeIN Sports 4",
+          image: "https://i.ibb.co/PzJFcxqR/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44555.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40830.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31535.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31535.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18095.m3u8"
+          }
+        },
+        bein5: {
+          name: "BeIN Sports 5",
+          image: "https://i.ibb.co/C551ztYq/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44556.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40831.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31536.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31536.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18094.m3u8"
+          }
+        },
+        bein6: {
+          name: "BeIN Sports 6",
+          image: "https://i.ibb.co/TxXK7TYr/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44557.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40832.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31537.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31537.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18093.m3u8"
+          }
+        },
+        bein7: {
+          name: "BeIN Sports 7",
+          image: "https://i.ibb.co/bgk059YL/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44558.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40833.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31538.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31538.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18092.m3u8"
+          }
+        },
+        bein8: {
+          name: "BeIN Sports 8",
+          image: "https://i.ibb.co/fzyW40tj/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44559.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40834.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31539.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31539.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18091.m3u8"
+          }
+        },
+        bein9: {
+          name: "BeIN Sports 9",
+          image: "https://i.ibb.co/1YFcL0nc/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/44560.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/40835.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31540.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/31540.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/18090.m3u8"
+          }
+        }
+      },
+      alkass: {
+        alkass1: {
+          name: "Al Kass 1",
+          image: "https://i.ibb.co/rG1k0d2s/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/46761.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46761.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46761.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46761.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/46761.m3u8"
+          }
+        },
+        alkass2: {
+          name: "Al Kass 2",
+          image: "https://i.ibb.co/j9fvPJDn/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/46760.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46760.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46760.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46760.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/46760.m3u8"
+          }
+        },
+        alkass3: {
+          name: "Al Kass 3",
+          image: "https://i.ibb.co/9kkKQGkh/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/46759.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46759.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46759.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46759.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/46759.m3u8"
+          }
+        },
+        alkass4: {
+          name: "Al Kass 4",
+          image: "https://i.ibb.co/ghnZ7Qt/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/46757.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46757.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46757.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/46757.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/46757.m3u8"
+          }
+        },
+        alkass5: {
+          name: "Al Kass 5",
+          image: "https://i.ibb.co/1GNGYXpN/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/113778.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/113778.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/113778.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/113778.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/113778.m3u8"
+          }
+        }
+      },
+      ssc: {
+        ssc1: {
+          name: "SSC 1",
+          image: "https://i.ibb.co/jZPZqwSC/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70949.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102193.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/60858.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102177.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/60859.m3u8"
+          }
+        },
+        ssc2: {
+          name: "SSC 2",
+          image: "https://i.ibb.co/5gFrcXVD/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70948.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102192.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/61029.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102176.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/61030.m3u8"
+          }
+        },
+        ssc3: {
+          name: "SSC 3",
+          image: "https://i.ibb.co/F4CK2BH8/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70947.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102191.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/62267.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102175.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/62265.m3u8"
+          }
+        },
+        ssc4: {
+          name: "SSC 4",
+          image: "https://i.ibb.co/tp1jHrbG/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70946.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102190.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/62268.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102174.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/62266.m3u8"
+          }
+        },
+        ssc5: {
+          name: "SSC 5",
+          image: "https://i.ibb.co/PsDZMPQv/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70945.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102189.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/61032.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102173.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/61031.m3u8"
+          }
+        },
+        ssc1x: {
+          name: "SSC Extra 1",
+          image: "https://i.ibb.co/XZkhxX4J/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70944.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102188.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/61034.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102172.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/61033.m3u8"
+          }
+        },
+        ssc2x: {
+          name: "SSC Extra 2",
+          image: "https://i.ibb.co/XZqqGQjb/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/70943.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102187.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/61068.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102171.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/61067.m3u8"
+          }
+        },
+        ssc3x: {
+          name: "SSC Extra 3",
+          image: "https://i.ibb.co/fY6qsTy0/image.jpg",
+          sources: {
+            low: "http://s.showplustv.pro:80/live/784512589635/785412587453/99003.m3u8",
+            sd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102186.m3u8",
+            hd: "http://s.showplustv.pro:80/live/784512589635/785412587453/99010.m3u8",
+            fhd: "http://s.showplustv.pro:80/live/784512589635/785412587453/102170.m3u8",
+            "4k": "http://s.showplustv.pro:80/live/784512589635/785412587453/99011.m3u8"
+          }
+        }
+      }
+    };
 
-     <!-- Rotana Section -->
-<section class="section" id="section-روتانا">
-  <div class="section-header">
-    <span class="badge">مباشر</span>
-    <h2>روتانا</h2>
-  </div>
-  <div class="channels-slider">
-    <div class="slider-container" id="روتانا">
-      
-      <!-- روتانا سينما -->
-      <a href="rotana-cinema.html" class="channel-link">
-        <div class="channel-card shape-1 color-1">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/TSF1eBu.png" alt="روتانا سينما" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">روتانا سينما</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- روتانا دراما -->
-      <a href="rotana-drama.html" class="channel-link">
-        <div class="channel-card shape-2 color-2">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/M3ObCDM.png" alt="روتانا دراما" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">روتانا دراما</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- روتانا كليب -->
-      <a href="rotana-clip.html" class="channel-link">
-        <div class="channel-card shape-3 color-3">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/EWbzp3M.png" alt="روتانا كليب" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">روتانا كليب</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- روتانا خليجية -->
-      <a href="rotana-khalijia.html" class="channel-link">
-        <div class="channel-card shape-4 color-4">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/YNj8sqF.png" alt="روتانا خليجية" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">روتانا خليجية</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- روتانا كلاسيك -->
-      <a href="rotana-classic.html" class="channel-link">
-        <div class="channel-card shape-1 color-5">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/D3yaWac.png" alt="روتانا كلاسيك" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">روتانا كلاسيك</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-    </div>
-  </div>
-</section>
+    // ============ إدارة المشغل ============
+    let currentChannel = null;
+    const player = videojs("video", {
+      html5: {
+        hls: {
+          overrideNative: true,
+          enableLowInitialPlaylist: true,
+          smoothQualityChange: true,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          bandwith: 4194304
+        }
+      },
+      controls: true,
+      autoplay: true,
+      muted: true,
+      fluid: true,
+      playbackRates: [0.5, 1, 1.5, 2],
+      responsive: true,
+      fill: true
+    });
 
-     <!-- MBC Section -->
-<section class="section" id="section-MBC">
-  <div class="section-header">
-    <span class="badge">مباشر</span>
-    <h2>MBC</h2>
-  </div>
-  <div class="channels-slider">
-    <div class="slider-container" id="MBC">
-      
-      <!-- MBC 1 -->
-      <a href="mbc1.html" class="channel-link">
-        <div class="channel-card shape-1 color-1">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/26UuMjC.png" alt="MBC 1" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">MBC 1</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- MBC 2 -->
-      <a href="mbc2.html" class="channel-link">
-        <div class="channel-card shape-2 color-2">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/oyTqkQ1.png" alt="MBC 2" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">MBC 2</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-       
-      <!-- MBC 3 -->
-      <a href="mbc3.html" class="channel-link">
-        <div class="channel-card shape-3 color-3">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/JpV3BNF.png" alt="MBC 3" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">MBC 3</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- MBC 4 -->
-      <a href="mbc4.html" class="channel-link">
-        <div class="channel-card shape-4 color-4">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/dbybIfV.png" alt="MBC 4" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">MBC 4</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- MBC مصر -->
-      <a href="mbc-masr.html" class="channel-link">
-        <div class="channel-card shape-1 color-5">
-          <span class="channel-live">
-            <span>مباشر</span>
-          </span>
-          <img src="https://i.imgur.com/d7AsENZ.png" alt="MBC مصر" class="channel-img">
-          <div class="channel-overlay">
-            <div class="channel-name">MBC مصر</div>
-            <span class="channel-quality">HD</span>
-          </div>
-        </div>
-      </a>
-      
-    </div>
-  </div>
-</section>
+    // حل مشكلة "The media could not be loaded"
+    handlePlayerError(player);
 
-  <!-- مشغل القناة -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeModal()">×</button>
-    <div class="modal-header">
-      <button class="refresh-btn" onclick="refreshStream()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 4v6h-6M1 20v-6h6" />
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-        </svg>
-      </button>
-      <div class="picture-in-picture-btn" onclick="togglePictureInPicture()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M8 21h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z" />
-          <path d="M4 15H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" />
-        </svg>
-      </div>
-    </div>
-    <div class="loading">جارٍ التحميل...</div>
-    <iframe id="stream-iframe" src="" allowfullscreen></iframe>
-  </div>
-</div>
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-tab active">
-      <i class="fas fa-home"></i>
-      <span>الصفحة الرئيسية</span>
-    </a>
-    <a href="matches.html" class="nav-tab">
-      <i class="fas fa-calendar-alt"></i>
-      <span>جدول المباريات</span>
-    </a>
-    <a href="leaguess.html" class="nav-tab">
-      <i class="fas fa-trophy"></i>
-      <span>ترتيب الدوريات</span>
-    </a>
-    <a href="settings.html" class="nav-tab">
-      <i class="fas fa-cog"></i>
-      <span>الإعدادات</span>
-    </a>
-  </nav>
-  <script src="app.js"></script>
-  <script src="app-v2.js"></script>
-      <script src="data.json"></script>
-  </body>
+    // ============ إدارة الواجهة ============
+    function showError(message) {
+      const errorElement = document.getElementById("errorMessage");
+      errorElement.textContent = message;
+      errorElement.style.display = "block";
+      setTimeout(() => {
+        errorElement.style.display = "none";
+      }, 5000);
+    }
+
+    function toggleDropdown() {
+      const options = document.getElementById("dropdownOptions");
+      options.classList.toggle("show");
+      
+      const chevron = document.querySelector(".dropdown-header i");
+      chevron.classList.toggle("fa-chevron-up");
+      chevron.classList.toggle("fa-chevron-down");
+    }
+
+    function selectQuality(quality, displayName) {
+      document.getElementById("selectedQuality").textContent = displayName;
+      
+      document.querySelectorAll(".dropdown-option").forEach(opt => {
+        opt.classList.remove("active");
+      });
+      event.target.classList.add("active");
+      
+      if (currentChannel) {
+        loadChannel(currentChannel.id, currentChannel.category);
+      }
+      
+      toggleDropdown();
+    }
+
+    function switchCategory(category) {
+      document.querySelectorAll('.channel-list').forEach(el => {
+        el.classList.remove('active');
+        el.classList.remove('animate__fadeIn');
+      });
+      
+      const activeList = document.getElementById(`${category}-channels`);
+      activeList.classList.add('active', 'animate__animated', 'animate__fadeIn');
+      
+      document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.category === category);
+      });
+    }
+
+    function loadChannel(channelId, category) {
+      const quality = document.getElementById("selectedQuality").textContent.toLowerCase();
+      const channel = channelsDB[category][channelId];
+      
+      if (!channel || !channel.sources[quality]) {
+        showError("هذه الجودة غير متوفرة لهذه القناة");
+        return;
+      }
+
+      currentChannel = { id: channelId, category: category };
+      document.getElementById("currentChannelName").textContent = channel.name;
+      document.getElementById("currentChannelName").classList.add('animate__animated', 'animate__pulse');
+      setTimeout(() => {
+        document.getElementById("currentChannelName").classList.remove('animate__animated', 'animate__pulse');
+      }, 1000);
+
+      player.src({
+        src: channel.sources[quality],
+        type: 'application/x-mpegURL'
+      });
+      
+      player.ready(() => {
+        player.play().catch(e => {
+          showError("التشغيل التلقائي غير مسموح. يرجى النقر على زر التشغيل");
+        });
+      });
+    }
+
+    // إغلاق القائمة عند النقر خارجها
+    window.onclick = function(event) {
+      if (!event.target.matches('.dropdown-header') && !event.target.matches('.dropdown-header *')) {
+        const dropdowns = document.getElementsByClassName("dropdown-options");
+        for (let i = 0; i < dropdowns.length; i++) {
+          const openDropdown = dropdowns[i];
+          if (openDropdown.classList.contains('show')) {
+            openDropdown.classList.remove('show');
+            const chevron = document.querySelector(".dropdown-header i");
+            chevron.classList.remove("fa-chevron-up");
+            chevron.classList.add("fa-chevron-down");
+          }
+        }
+      }
+    }
+
+    // ============ تهيئة الصفحة ============
+    window.onload = () => {
+      // تعبئة القنوات في الواجهة
+      for (const category in channelsDB) {
+        const container = document.getElementById(`${category}-channels`);
+        for (const channelId in channelsDB[category]) {
+          const ch = channelsDB[category][channelId];
+          const card = document.createElement("div");
+          card.className = "channel-card animate__animated animate__fadeIn";
+          card.style.animationDelay = `${Math.random() * 0.5}s`;
+          card.onclick = () => loadChannel(channelId, category);
+          card.innerHTML = `
+            <img src="${ch.image}" alt="${ch.name}" />
+            <div class="title">${ch.name}</div>
+          `;
+          container.appendChild(card);
+        }
+      }
+      
+      // إعداد تبويبات الأقسام
+      document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          switchCategory(tab.dataset.category);
+        });
+      });
+      
+      // تفعيل القسم الأول
+      switchCategory('bein');
+    };
+  </script>
+</body>
 </html>
