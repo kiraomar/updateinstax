@@ -3,6 +3,7 @@
 <head>
 <meta charset='UTF-8'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
 <title>Player</title>
 <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -80,7 +81,7 @@ body,html{margin:0;padding:0;overflow:hidden;background:#000;height:100%;width:1
 </div>
 </div>
 <div id="video-wrapper">
-<video autoplay id='video'></video>
+<video autoplay id='video' crossorigin="anonymous"></video>
 </div>
 <div id="settings-popup">
 <div class="settings-header">
@@ -172,12 +173,13 @@ window.addEventListener('load', function() {
         selectChannelMsg: document.getElementById('select-channel-msg')
     };
 
+    // تأكد من أن هذا الرابط يطابق رابط Cloudflare Worker الذي قمت بتحديثه
     const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
 
-    // عدنا للقائمة المتنوعة لضمان وجود مصادر بديلة
+    // الروابط الأصلية التي طلبتها
     const channels = [
         { name: "beIN Sports 1", url: "http://135.125.109.73:9000/beinsport1_.m3u8" },
-        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv2/ch2/adaptive.m3u8" },
+        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
         { name: "beIN Sports 3", url: "https://py.dencreak.com/bn_s_fhd3.m3u8" },
         { name: "beIN Sports 4", url: "https://py.dencreak.com/bn_s_fhd4.m3u8" },
         { name: "beIN Sports 5", url: "https://py.dencreak.com/bn_s_fhd5.m3u8" },
@@ -186,11 +188,15 @@ window.addEventListener('load', function() {
         { name: "beIN Sports 8", url: "https://py.dencreak.com/bn_s_fhd8.m3u8" },
         { name: "beIN Sports 9", url: "https://py.dencreak.com/bn_s_fhd9.m3u8" },
         { name: "Alkass 1", url: "https://liveeu-gcp.alkassdigital.net/alkass1-p/main.m3u8" },
-        { name: "Alkass 2", url: "https://liveeu-gcp.alkassdigital.net/alkass2-p/main.m3u8" }
+        { name: "Alkass 2", url: "https://liveeu-gcp.alkassdigital.net/alkass2-p/main.m3u8" },
+        { name: "Alkass 3", url: "https://liveeu-gcp.alkassdigital.net/alkass3-p/main.m3u8" },
+        { name: "Alkass 4", url: "https://liveeu-gcp.alkassdigital.net/alkass4-p/main.m3u8" },
+        { name: "Alkass 5", url: "https://liveeu-gcp.alkassdigital.net/alkass5-p/main.m3u8" },
+        { name: "Alkass 6", url: "https://liveeu-gcp.alkassdigital.net/alkass6-p/main.m3u8" },
     ];
 
     let t, n, o = false, i = [], l = !1;
-    let currentChannelUrl = ""; // فارغ في البداية
+    let currentChannelUrl = ""; 
     let channelsVisible = false;
 
     function createChannelsList() {
@@ -206,7 +212,7 @@ window.addEventListener('load', function() {
                     item.classList.remove('active');
                 });
                 channelItem.classList.add('active');
-                e.selectChannelMsg.style.display = 'none'; // إخفاء رسالة الترحيب
+                e.selectChannelMsg.style.display = 'none';
                 loadChannel(channel.url, channelItem);
                 hideChannels();
             });
@@ -236,9 +242,7 @@ window.addEventListener('load', function() {
     async function loadVideo(channelUrl, channelElement = null) {
         if (!channelUrl) return;
 
-        // تفعيل البروكسي للجميع (HTTP و HTTPS)
-        // هذا ضروري لقناة 1 لتجاوز mixed content
-        // وضروري لقنوات supertv لحل مشكلة CORS
+        // تفعيل البروكسي لجميع القنوات لضمان عمل الروابط الأصلية الصعبة
         if (corsProxy) {
             console.log("Using proxy for stream:", channelUrl);
             channelUrl = corsProxy + channelUrl;
@@ -279,7 +283,10 @@ window.addEventListener('load', function() {
                 lowLatencyMode: true,
                 backBufferLength: 90,
                 maxBufferLength: 30,
-                liveSyncDurationCount: 3
+                liveSyncDurationCount: 3,
+                xhrSetup: function(xhr, url) {
+                    xhr.withCredentials = false; 
+                }
             });
 
             n.loadSource(channelUrl);
@@ -308,6 +315,7 @@ window.addEventListener('load', function() {
                 if (data.fatal) {
                     switch (data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error("Network error:", data);
                             if (channelElement) channelElement.classList.add('error');
                             let errorMsg = "تعذر الاتصال بالبث.";
                             a("خطأ في الشبكة", errorMsg);
@@ -469,7 +477,7 @@ window.addEventListener('load', function() {
         if (o) {
             e.video.style.objectFit = "cover";
             e.videoWrapper.classList.remove("video-contain");
-            e.fitScreenBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>';
+            e.fitScreenBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>';
             e.fitScreenStatus.textContent = "مفعل";
         } else {
             e.video.style.objectFit = "contain";
