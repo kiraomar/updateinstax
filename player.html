@@ -57,7 +57,6 @@
 
     #error-msg { position: absolute; color: #ff6b6b; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; display: none; text-align: center; z-index: 100; }
 
-    /* Center Play Button (For explicit interaction) */
     #center-play-btn {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         width: 80px; height: 80px; background: rgba(0,0,0,0.6); border-radius: 50%;
@@ -84,23 +83,20 @@
     <div id="toast"></div>
     <div id="channel-title">جاري التحميل...</div>
     
-    <!-- زر تشغيل كبير يظهر فقط عند فشل التشغيل التلقائي -->
     <div id="center-play-btn"><i data-feather="play"></i></div>
 
     <a href="index.html" id="back-btn">
         <i data-feather="arrow-right"></i>
     </a>
 
-    <!-- إضافة muted و autoplay و playsinline لزيادة فرص التشغيل -->
     <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
 
-    <!-- Controls -->
     <div id="controls" class="controls-overlay">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <button class="control-btn" id="settings-btn"><i data-feather="settings"></i></button>
                 <button class="control-btn" id="fullscreen-btn"><i data-feather="maximize"></i></button>
-                <button class="control-btn" id="mute-btn"><i data-feather="volume-x"></i></button> <!-- زر الصوت -->
+                <button class="control-btn" id="mute-btn"><i data-feather="volume-x"></i></button>
             </div>
             <div>
                 <button class="control-btn" id="play-btn"><i data-feather="pause"></i></button>
@@ -108,7 +104,6 @@
         </div>
     </div>
 
-    <!-- Settings -->
     <div id="settings-menu">
         <div style="padding: 10px; background: rgba(255,255,255,0.05); font-weight: bold; color: #ddd; text-align: center;">الجودة</div>
         <div id="quality-list"></div>
@@ -116,12 +111,10 @@
 </div>
 
 <script>
-    // 1. استخراج البيانات
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('url');
     const streamName = urlParams.get('name');
 
-    // إعدادات المتغيرات
     const video = document.getElementById('video');
     const corsProxy = 'https://primetv.omao18193.workers.dev/'; 
     const loading = document.getElementById('loading-spinner');
@@ -136,37 +129,28 @@
 
     if (streamName) document.getElementById('channel-title').textContent = streamName;
 
-    // دالة محاولة التشغيل الذكية (Smart AutoPlay)
     function attemptPlay() {
-        // نحاول التشغيل
         var playPromise = video.play();
-
         if (playPromise !== undefined) {
             playPromise.then(_ => {
-                // نجح التشغيل!
                 loading.style.display = 'none';
                 centerPlayBtn.style.display = 'none';
                 updatePlayIcons();
-                // إذا كان الفيديو صامتاً، نخبر المستخدم
                 if (video.muted) {
-                    showToast("تم كتم الصوت للتشغيل التلقائي");
+                    showToast("تم كتم الصوت تلقائياً");
                     updateMuteIcon();
                 }
             })
             .catch(error => {
-                // فشل التشغيل (غالباً بسبب الصوت)
                 console.log("Autoplay prevented. Trying muted...");
-                // نجبر الفيديو على الصمت ونحاول مرة أخرى
                 video.muted = true;
                 updateMuteIcon();
-                
                 video.play().then(() => {
                     loading.style.display = 'none';
                     centerPlayBtn.style.display = 'none';
-                    showToast("تم كتم الصوت تلقائياً");
+                    showToast("تم كتم الصوت للتشغيل");
                     updatePlayIcons();
                 }).catch(e => {
-                    // فشل تماماً (نادر الحدوث)، نظهر زر التشغيل الكبير
                     loading.style.display = 'none';
                     centerPlayBtn.style.display = 'flex';
                     showToast("انقر للتشغيل");
@@ -189,31 +173,35 @@
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: true,
-                // إعدادات البفر (Buffer)
+                startFragPrefetch: true, // البدء بجلب أول جزء فوراً
+                
+                // === إعدادات الإقلاع السريع ===
                 maxBufferLength: 30,
                 maxMaxBufferLength: 60,
-                backBufferLength: 90,
+                liveSyncDurationCount: 2, // البدء من نقطة قريبة جداً للبث المباشر
+                maxBufferHole: 0.5, // السماح بفجوات صغيرة لتجنب التوقف
+                
                 // إعدادات الشبكة
-                manifestLoadingTimeOut: 10000,
-                manifestLoadingMaxRetry: 4,
-                levelLoadingTimeOut: 10000,
-                levelLoadingMaxRetry: 4,
+                manifestLoadingTimeOut: 15000,
+                manifestLoadingMaxRetry: 3,
                 fragLoadingTimeOut: 20000,
-                fragLoadingMaxRetry: 6,
+                
                 xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
             });
 
-            hls.loadSource(finalUrl);
+            // الترتيب الصحيح: ربط الفيديو أولاً ثم تحميل المصدر
             hls.attachMedia(video);
+            
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+                hls.loadSource(finalUrl);
+            });
 
             hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                 hlsLevels = hls.levels;
-                // استدعاء دالة التشغيل الذكية بدلاً من video.play() مباشرة
                 attemptPlay();
             });
 
             hls.on(Hls.Events.LEVEL_LOADED, () => {
-                // التأكد من إخفاء اللودينج عند بدء تحميل البيانات فعلياً
                 if(!video.paused) loading.style.display = 'none';
             });
 
@@ -243,7 +231,6 @@
         }
     }
 
-    // UI Functions
     function showError(msg) {
         loading.style.display = 'none';
         errorMsg.style.display = 'block';
@@ -268,7 +255,6 @@
         feather.replace();
     }
 
-    // Controls Logic
     const controls = document.getElementById('controls');
     const playBtn = document.getElementById('play-btn');
     const settingsBtn = document.getElementById('settings-btn');
@@ -290,7 +276,6 @@
     document.body.addEventListener('touchstart', showControls);
     document.body.addEventListener('click', showControls);
 
-    // Button Events
     const togglePlay = () => {
         if (video.paused) video.play().then(updatePlayIcons);
         else video.pause(); updatePlayIcons();
@@ -298,7 +283,6 @@
 
     playBtn.onclick = togglePlay;
     centerPlayBtn.onclick = () => {
-        // عند الضغط على الزر الكبير، نحاول التشغيل بالصوت
         video.muted = false;
         video.play().then(() => {
             centerPlayBtn.style.display = 'none';
@@ -320,13 +304,11 @@
         }
     };
 
-    // Video Events
     video.addEventListener('play', updatePlayIcons);
     video.addEventListener('pause', updatePlayIcons);
     video.addEventListener('waiting', () => loading.style.display = 'block');
     video.addEventListener('playing', () => loading.style.display = 'none');
 
-    // Settings (Quality)
     settingsBtn.onclick = (e) => {
         e.stopPropagation();
         if (settingsMenu.style.display === 'block') {
@@ -377,5 +359,3 @@
 </script>
 </body>
 </html>
-
-
