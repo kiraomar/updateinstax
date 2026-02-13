@@ -3,136 +3,116 @@
 <head>
 <meta charset='UTF-8'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>قائمة القنوات TV</title>
+<title>القائمة الرئيسية TV</title>
 <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 <style>
-    :root {
-        --primary-color: #ffc107;
-        --bg-dark: #121212;
-        --bg-card: #1e1e1e;
-        --text-light: #ffffff;
-    }
-
+    :root { --bg-dark: #121212; --text-light: #ffffff; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body, html { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-light); }
+    body, html { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-light); height: 100%; }
 
     .container {
-        max-width: 1200px;
+        max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
-    }
-
-    .header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .header h1 { margin: 0; font-size: 1.5rem; color: var(--primary-color); }
-
-    .channels-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
-    }
-
-    .channel-card {
-        background: var(--bg-card);
-        border-radius: 12px;
         padding: 20px;
         display: flex;
         flex-direction: column;
-        align-items: center;
         justify-content: center;
+        min-height: 100vh;
+    }
+
+    .header { text-align: center; margin-bottom: 40px; }
+    .header h1 { color: #ffc107; font-size: 2rem; margin: 0; }
+    .header p { color: #888; margin-top: 10px; }
+
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .menu-card {
+        background: #1e1e1e;
+        border-radius: 15px;
+        padding: 30px;
         text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(255,255,255,0.05);
-        height: 140px;
         text-decoration: none;
         color: white;
+        border: 2px solid rgba(255,255,255,0.05);
+        transition: transform 0.3s, border-color 0.3s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
     }
 
-    .channel-card:hover {
+    .menu-card:hover {
         transform: translateY(-5px);
-        background: rgba(255,255,255,0.1);
-        border-color: var(--primary-color);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        background: #252525;
     }
 
-    .channel-icon {
-        margin-bottom: 15px;
-        color: var(--primary-color);
+    .icon-box {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 10px;
     }
 
-    .channel-name {
-        font-weight: 600;
-        font-size: 1rem;
-    }
+    /* ألوان مميزة لكل قسم */
+    .card-bein-hd { border-color: #9c27b0; }
+    .card-bein-hd .icon-box { background: rgba(156, 39, 176, 0.2); color: #e1bee7; }
+    
+    .card-bein-sd { border-color: #ff9800; }
+    .card-bein-sd .icon-box { background: rgba(255, 152, 0, 0.2); color: #ffe0b2; }
 
-    /* Mobile Responsive */
-    @media (max-width: 480px) {
-        .channels-grid {
-            grid-template-columns: repeat(2, 1fr); /* عمودين في الموبايل */
-        }
-    }
+    .card-alwan-hd { border-color: #03a9f4; }
+    .card-alwan-hd .icon-box { background: rgba(3, 169, 244, 0.2); color: #b3e5fc; }
+
+    .card-alwan-sd { border-color: #4caf50; }
+    .card-alwan-sd .icon-box { background: rgba(76, 175, 80, 0.2); color: #c8e6c9; }
+
+    h2 { margin: 0; font-size: 1.2rem; }
+    span { font-size: 0.9rem; opacity: 0.7; }
 </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <i data-feather="tv" style="width: 32px; height: 32px; color: #ffc107;"></i>
-        <h1>قائمة القنوات</h1>
+        <h1><i data-feather="tv"></i> التلفاز المباشر</h1>
+        <p>اختر الباقة للمشاهدة</p>
     </div>
 
-    <div id="channels-container" class="channels-grid">
-        <!-- سيتم إضافة القنوات هنا بواسطة جافاسكريبت -->
+    <div class="menu-grid">
+        <!-- 1. beIN HD -->
+        <a href="beinhd.html" class="menu-card card-bein-hd">
+            <div class="icon-box"><i data-feather="monitor"></i></div>
+            <h2>beIN Sports HD</h2>
+            <span>9 قنوات عالية الجودة</span>
+        </a>
+
+        <!-- 2. beIN SD -->
+        <a href="beinsd.html" class="menu-card card-bein-sd">
+            <div class="icon-box"><i data-feather="smartphone"></i></div>
+            <h2>beIN Sports SD</h2>
+            <span>9 قنوات للجوال</span>
+        </a>
+
+        <!-- 3. Alwan HD -->
+        <a href="alwanhd.html" class="menu-card card-alwan-hd">
+            <div class="icon-box"><i data-feather="award"></i></div>
+            <h2>الوان سبورت HD</h2>
+            <span>6 قنوات عالية الجودة</span>
+        </a>
+
+        <!-- 4. Alwan SD -->
+        <a href="alwansd.html" class="menu-card card-alwan-sd">
+            <div class="icon-box"><i data-feather="activity"></i></div>
+            <h2>الوان سبورت SD</h2>
+            <span>6 قنوات للجوال</span>
+        </a>
     </div>
 </div>
 
-<script>
-    // قائمة القنوات
-    const channels = [
-        { name: "beIN Sports 1", url: "https://stream.supertv.gg:3002/supertv/sport/stv1/ch1/adaptive.m3u8" },
-        { name: "beIN Sports 2", url: "https://stream.supertv.gg:3002/supertv/sport/stv2/ch2/adaptive.m3u8" },
-        { name: "beIN Sports 3", url: "https://stream.supertv.gg:3002/supertv/sport/stv3/ch3/adaptive.m3u8" },
-        { name: "beIN Sports 4", url: "https://stream.supertv.gg:3002/supertv/sport/stv4/ch4/adaptive.m3u88" },
-        { name: "beIN Sports 5", url: "https://stream.supertv.gg:3002/supertv/sport/stv5/ch5/adaptive.m3u8" },
-        { name: "beIN Sports 6", url: "https://stream.supertv.gg:3002/supertv/sport/stv6/ch6/adaptive.m3u8" },
-        { name: "beIN Sports 7", url: "https://stream.supertv.gg:3002/supertv/sport/stv7/ch7/adaptive.m3u8" },
-        { name: "beIN Sports 8", url: "https://stream.supertv.gg:3002/supertv/sport/stv8/ch8/adaptive.m3u8" },
-        { name: "beIN Sports 9", url: "https://stream.supertv.gg:3002/supertv/sport/stv9/ch9/adaptive.m3u8" },
-        { name: "Alwan Sports SD 1", url: "http://ibo.lynxiptv.com/live/760495572073/4ZWyUoO4zA/222237.m3u8" },
-        { name: "Alkass 2", url: "https://liveeu-gcp.alkassdigital.net/alkass2-p/main.m3u8" },
-        { name: "Alkass 3", url: "https://liveeu-gcp.alkassdigital.net/alkass3-p/main.m3u8" },
-        { name: "Alkass 4", url: "https://liveeu-gcp.alkassdigital.net/alkass4-p/main.m3u8" },
-        { name: "Alkass 5", url: "https://liveeu-gcp.alkassdigital.net/alkass5-p/main.m3u8" },
-        { name: "Alkass 6", url: "https://liveeu-gcp.alkassdigital.net/alkass6-p/main.m3u8" },
-    ];
-
-    const container = document.getElementById('channels-container');
-
-    channels.forEach(channel => {
-        const card = document.createElement('a'); // نستخدم a لسهولة الانتقال
-        card.className = 'channel-card';
-        
-        // بناء الرابط: نرسل الرابط والاسم كـ Parameters للصفحة الثانية
-        // encodeURIComponent مهم جداً للتعامل مع الرموز الخاصة في الروابط
-        card.href = `player.html?url=${encodeURIComponent(channel.url)}&name=${encodeURIComponent(channel.name)}`;
-        
-        card.innerHTML = `
-            <div class="channel-icon"><i data-feather="play-circle" style="width:40px; height:40px;"></i></div>
-            <div class="channel-name">${channel.name}</div>
-        `;
-        container.appendChild(card);
-    });
-
-    feather.replace();
-</script>
-
+<script>feather.replace();</script>
 </body>
 </html>
