@@ -165,7 +165,7 @@
             return;
         }
 
-        const finalUrl = corsProxy + streamUrl;
+        const finalUrl = corsProxy + '?url=' + encodeURIComponent(streamUrl);
         console.log("Playing:", finalUrl);
 
         if (Hls.isSupported()) {
