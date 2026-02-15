@@ -1,20 +1,88 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Video Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+:root { --primary-color:#ffc107; }
+body,html{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    background:#000;
+    height:100%;
+    width:100%;
+    font-family:sans-serif;
+}
+#video-container{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+#loading-spinner{
+    width:50px;
+    height:50px;
+    border:4px solid rgba(255,255,255,0.3);
+    border-top-color:var(--primary-color);
+    border-radius:50%;
+    position:absolute;
+    animation:spin 1s linear infinite;
+    z-index:10;
+}
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+#error-msg{
+    position:absolute;
+    color:#ff6b6b;
+    background:rgba(0,0,0,0.8);
+    padding:20px;
+    border-radius:10px;
+    display:none;
+    text-align:center;
+    z-index:100;
+}
+</style>
+</head>
+<body>
+
+<div id="video-container">
+    <div id="loading-spinner"></div>
+    <div id="error-msg">حدث خطأ في التشغيل</div>
+    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
+</div>
+
 <script>
 
 const urlParams = new URLSearchParams(window.location.search);
 const streamUrl = urlParams.get('url');
+
 const video = document.getElementById('video');
 const loading = document.getElementById('loading-spinner');
 const errorMsg = document.getElementById('error-msg');
 
-// 🔥 رابط الوركر
-const corsProxy = 'https://test.omao18193.workers.dev/';
+const corsProxy = "https://test.omao18193.workers.dev/";
 
 let hls = null;
 
 function showError(msg){
-    loading.style.display='none';
-    errorMsg.style.display='block';
-    errorMsg.textContent=msg;
+    loading.style.display = "none";
+    errorMsg.style.display = "block";
+    errorMsg.textContent = msg;
 }
 
 function buildFinalUrl(url){
@@ -26,7 +94,7 @@ function buildFinalUrl(url){
         return url;
     }
 
-    return corsProxy + '?url=' + encodeURIComponent(url);
+    return corsProxy + "?url=" + encodeURIComponent(url);
 }
 
 function initPlayer(){
@@ -63,11 +131,11 @@ function initPlayer(){
 
         hls.on(Hls.Events.MANIFEST_PARSED,function(){
             video.play().then(()=>{
-                loading.style.display='none';
+                loading.style.display="none";
             }).catch(()=>{
                 video.muted=true;
                 video.play();
-                loading.style.display='none';
+                loading.style.display="none";
             });
         });
 
@@ -102,7 +170,7 @@ function initPlayer(){
 
         video.addEventListener('loadedmetadata',()=>{
             video.play();
-            loading.style.display='none';
+            loading.style.display="none";
         });
 
         video.addEventListener('error',()=>{
@@ -114,3 +182,5 @@ function initPlayer(){
 initPlayer();
 
 </script>
+</body>
+</html>
