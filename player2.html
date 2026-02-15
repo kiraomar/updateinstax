@@ -5,158 +5,407 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="referrer" content="no-referrer">
 <title>Video Player</title>
-
+<!-- مكتبة الأيقونات -->
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<!-- مكتبة HLS -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-body,html{
-    margin:0;
-    padding:0;
-    background:#000;
-    height:100%;
-    width:100%;
-    overflow:hidden;
-    font-family:sans-serif;
-}
-#container{
-    position:relative;
-    width:100%;
-    height:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-video{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    background:black;
-}
-#loading{
-    position:absolute;
-    width:50px;
-    height:50px;
-    border:4px solid rgba(255,255,255,0.3);
-    border-top-color:#ffc107;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-}
-@keyframes spin{
-    to{transform:rotate(360deg)}
-}
-#error{
-    position:absolute;
-    color:#ff6b6b;
-    background:rgba(0,0,0,0.8);
-    padding:15px;
-    border-radius:8px;
-    display:none;
-}
-/* أزرار التحكم */
-#controls{
-    position:absolute;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    display:flex;
-    gap:10px;
-}
-.control-btn{
-    padding:8px 15px;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-    font-size:14px;
-    color:white;
-    background:#03a9f4;
-}
-.control-btn.fullscreen{
-    background:#ff5722;
-}
+    :root { --primary-color: #ffc107; }
+    body, html { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; width: 100%; font-family: sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+    
+    #video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+
+    /* زر الرجوع */
+    #back-btn {
+        position: absolute; top: 20px; right: 20px; z-index: 50;
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
+        width: 45px; height: 45px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; cursor: pointer; backdrop-filter: blur(5px);
+        text-decoration: none; transition: background 0.3s;
+    }
+    #back-btn:hover { background: rgba(255,255,255,0.2); }
+    
+    /* عنوان القناة */
+    #channel-title {
+        position: absolute; top: 20px; left: 20px; z-index: 50;
+        color: white; background: rgba(0,0,0,0.6); padding: 8px 15px;
+        border-radius: 20px; font-weight: bold; pointer-events: none;
+        backdrop-filter: blur(5px); display: none;
+    }
+
+    /* طبقة التحكم السفلية */
+    .controls-overlay { 
+        position: absolute; bottom: 0; width: 100%; padding: 20px; box-sizing: border-box;
+        background: linear-gradient(transparent, rgba(0,0,0,0.9)); 
+        z-index: 20; transition: opacity 0.3s; 
+    }
+    .controls-overlay.hidden { opacity: 0; pointer-events: none; }
+    
+    .control-btn { background: none; border: none; color: white; cursor: pointer; margin: 0 10px; transition: transform 0.2s; padding: 10px; }
+    .control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
+    .control-btn:active { transform: scale(0.95); }
+
+    /* أيقونة التحميل */
+    #loading-spinner {
+        width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: var(--primary-color);
+        border-radius: 50%; position: absolute; animation: spin 1s linear infinite; z-index: 10;
+        pointer-events: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* رسائل التنبيه */
+    #toast {
+        position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+        background: var(--primary-color); color: #000; padding: 8px 20px;
+        border-radius: 20px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 60;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* رسالة الخطأ */
+    #error-msg { 
+        position: absolute; color: #ff6b6b; background: rgba(0,0,0,0.9); 
+        padding: 20px; border-radius: 10px; display: none; text-align: center; z-index: 100; 
+        border: 1px solid #ff6b6b;
+    }
+
+    /* زر التشغيل الكبير في الوسط */
+    #center-play-btn {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 80px; height: 80px; background: rgba(0,0,0,0.6); border-radius: 50%;
+        display: none; align-items: center; justify-content: center;
+        border: 2px solid white; cursor: pointer; z-index: 40; backdrop-filter: blur(4px);
+    }
+    #center-play-btn i { color: white; width: 40px; height: 40px; margin-left: 5px; }
+
+    /* قائمة الإعدادات (الجودة) */
+    #settings-menu {
+        position: absolute; bottom: 90px; left: 20px; background: rgba(20,20,20,0.95);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 200px; max-height: 250px;
+        display: none; z-index: 30; overflow-y: auto; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    }
+    .menu-header { padding: 10px; background: rgba(255,255,255,0.05); font-weight: bold; color: #ddd; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .menu-item { padding: 12px 15px; color: white; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 0.9em; }
+    .menu-item:hover { background: rgba(255,255,255,0.1); color: var(--primary-color); }
+    
+    /* شريط التمرير للقائمة */
+    #settings-menu::-webkit-scrollbar { width: 6px; }
+    #settings-menu::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<div id="container">
-    <div id="loading"></div>
-    <div id="error">فشل تشغيل القناة</div>
-    <video id="video" autoplay muted playsinline></video>
-    <div id="controls">
-        <button id="muteBtn" class="control-btn">كتم/إلغاء كتم</button>
-        <button id="fullscreenBtn" class="control-btn fullscreen">وضع كامل</button>
+<div id="video-container">
+    <div id="loading-spinner"></div>
+    <div id="error-msg">فشل تشغيل القناة</div>
+    <div id="toast">تم نسخ الرابط</div>
+    <div id="channel-title"></div>
+    
+    <!-- زر التشغيل اليدوي (يظهر عند فشل التشغيل التلقائي بالصوت) -->
+    <div id="center-play-btn"><i data-feather="play"></i></div>
+
+    <!-- زر الرجوع -->
+    <a href="javascript:history.back()" id="back-btn">
+        <i data-feather="arrow-right"></i>
+    </a>
+
+    <!-- الفيديو -->
+    <video id="video" autoplay playsinline></video> <!-- تمت إزالة muted افتراضياً ليحاول التشغيل بالصوت أولاً -->
+
+    <!-- واجهة التحكم -->
+    <div id="controls" class="controls-overlay">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-direction: row-reverse;">
+            
+            <!-- أزرار الجهة اليمنى (التشغيل) -->
+            <div>
+                <button class="control-btn" id="play-btn"><i data-feather="pause"></i></button>
+            </div>
+
+            <!-- أزرار الجهة اليسرى (الإعدادات، الشاشة، الصوت) -->
+            <div style="display: flex; gap: 5px;">
+                <button class="control-btn" id="mute-btn"><i data-feather="volume-2"></i></button>
+                <button class="control-btn" id="fullscreen-btn"><i data-feather="maximize"></i></button>
+                <button class="control-btn" id="settings-btn"><i data-feather="settings"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة الجودة -->
+    <div id="settings-menu">
+        <div class="menu-header">الجودة</div>
+        <div id="quality-list"></div>
     </div>
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const streamUrl = params.get("url");
+    // --- إعداد المتغيرات الأساسية ---
+    const params = new URLSearchParams(window.location.search);
+    const streamUrl = params.get("url");
+    const streamName = params.get("name"); // اختياري: لعرض اسم القناة
 
-const video = document.getElementById("video");
-const loading = document.getElementById("loading");
-const errorBox = document.getElementById("error");
+    // عناصر الواجهة
+    const video = document.getElementById("video");
+    const loading = document.getElementById("loading-spinner");
+    const errorBox = document.getElementById("error-msg");
+    const toast = document.getElementById("toast");
+    const centerPlayBtn = document.getElementById("center-play-btn");
+    const controls = document.getElementById('controls');
+    const settingsMenu = document.getElementById('settings-menu');
+    const titleEl = document.getElementById('channel-title');
+    
+    // أزرار التحكم
+    const playBtn = document.getElementById('play-btn');
+    const muteBtn = document.getElementById('mute-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const settingsBtn = document.getElementById('settings-btn');
 
-// التحكم بالصوت
-const muteBtn = document.getElementById("muteBtn");
-muteBtn.addEventListener('click', ()=>{
-    video.muted = !video.muted;
-    muteBtn.textContent = video.muted ? "إلغاء كتم" : "كتم";
-});
+    let hls = null;
+    let controlsTimeout;
 
-// التحكم بالوضع الكامل
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-fullscreenBtn.addEventListener('click', ()=>{
-    if (video.requestFullscreen) video.requestFullscreen();
-    else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); // Safari
-    else if (video.msRequestFullscreen) video.msRequestFullscreen();
-});
+    // عرض اسم القناة إذا وجد
+    if(streamName) {
+        titleEl.textContent = streamName;
+        titleEl.style.display = 'block';
+    }
 
-function showError(){
-    loading.style.display = "none";
-    errorBox.style.display = "block";
-}
+    // --- وظائف الواجهة (UI Functions) ---
 
-// تحميل البث
-if(!streamUrl){
-    showError();
-}else{
-    if(Hls.isSupported()){
-        const hls = new Hls({
-            enableWorker:true,
-            maxBufferLength:60,
-            backBufferLength:90
-        });
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function(){
-            video.play().then(()=>{
-                loading.style.display="none";
-            }).catch(()=>{
-                video.muted = true;
-                video.play();
-                loading.style.display="none";
+    function showToast(message) {
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', 2000);
+    }
+
+    function updatePlayIcon() {
+        const icon = video.paused ? "play" : "pause";
+        playBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+        feather.replace();
+    }
+
+    function updateMuteIcon() {
+        const icon = video.muted ? "volume-x" : "volume-2";
+        muteBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+        feather.replace();
+    }
+
+    function showError(msg) {
+        loading.style.display = "none";
+        errorBox.textContent = msg || "فشل تشغيل القناة";
+        errorBox.style.display = "block";
+    }
+
+    function hideControls() {
+        if (!video.paused && settingsMenu.style.display !== 'block') {
+            controls.classList.add('hidden');
+            document.body.style.cursor = 'none';
+            titleEl.style.opacity = '0';
+            document.getElementById('back-btn').style.opacity = '0';
+        }
+    }
+
+    function showControls() {
+        controls.classList.remove('hidden');
+        document.body.style.cursor = 'default';
+        titleEl.style.opacity = '1';
+        document.getElementById('back-btn').style.opacity = '1';
+        
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(hideControls, 3000);
+    }
+
+    // --- منطق المشغل (Player Logic - Simple Version) ---
+
+    if (!streamUrl) {
+        showError("لم يتم العثور على رابط القناة (url parameter missing)");
+    } else {
+        // التحقق من HLS
+        if (Hls.isSupported()) {
+            
+            // إعدادات HLS بسيطة (نفس المشغل الأول) مع إضافة بسيطة للتعامل مع الأحداث
+            const config = {
+                enableWorker: true, // Worker داخلي للمعالجة فقط (ليس بروكسي)
+                maxBufferLength: 60,
+                backBufferLength: 90
+            };
+
+            hls = new Hls(config);
+            hls.loadSource(streamUrl); // تحميل الرابط المباشر بدون تعديل
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                // محاولة التشغيل
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        loading.style.display = "none";
+                        updatePlayIcon();
+                    }).catch(() => {
+                        // إذا فشل التشغيل التلقائي (بسبب الصوت)، نكتم الصوت ونحاول مجدداً
+                        video.muted = true;
+                        updateMuteIcon();
+                        video.play().then(() => {
+                            loading.style.display = "none";
+                            updatePlayIcon();
+                            showToast("تم كتم الصوت للتشغيل التلقائي");
+                        }).catch(() => {
+                            // إذا فشل تماماً، نظهر زر التشغيل اليدوي
+                            loading.style.display = "none";
+                            centerPlayBtn.style.display = "flex";
+                        });
+                    });
+                }
+                
+                // تحديث قائمة الجودة
+                updateQualityMenu(hls.levels);
             });
-        });
-        hls.on(Hls.Events.ERROR, function(event,data){
-            if(data.fatal){
-                showError();
-            }
-        });
-    }else if(video.canPlayType("application/vnd.apple.mpegurl")){
-        video.src = streamUrl;
-        video.addEventListener("loadedmetadata", ()=>{
-            video.play();
-            loading.style.display="none";
-        });
-    }else{
-        showError();
+
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log("Network error, retrying...");
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log("Media error, recovering...");
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            showError("خطأ فادح في البث");
+                            break;
+                    }
+                }
+            });
+
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            // تشغيل أصلي (Safari/iOS)
+            video.src = streamUrl;
+            video.addEventListener("loadedmetadata", () => {
+                video.play();
+                loading.style.display = "none";
+            });
+            // iOS لا يدعم اختيار الجودة يدوياً عبر HLS API
+            document.getElementById('quality-list').innerHTML = '<div class="menu-item">تلقائي (النظام)</div>';
+        } else {
+            showError("المتصفح لا يدعم تشغيل هذا الفيديو");
+        }
     }
 
-    // كتم تلقائي إذا تم تمرير mute=true في الرابط
-    if(params.get("mute") === "true"){
-        video.muted = true;
-        muteBtn.textContent = "إلغاء كتم";
+    // --- منطق القائمة والأزرار ---
+
+    // بناء قائمة الجودة
+    function updateQualityMenu(levels) {
+        const list = document.getElementById('quality-list');
+        list.innerHTML = ''; // مسح القائمة
+
+        // خيار تلقائي
+        addQualityOption(list, -1, 'Auto (تلقائي)');
+
+        // باقي الجودات
+        if (levels && levels.length > 0) {
+            levels.forEach((lvl, index) => {
+                // حساب الدقة (مثلاً 720p)
+                const label = lvl.height ? `${lvl.height}p` : `Level ${index}`;
+                addQualityOption(list, index, label);
+            });
+        }
     }
-}
+
+    function addQualityOption(container, index, label) {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        
+        // التحقق مما إذا كان هذا الخيار محدد
+        const isSelected = hls ? (hls.currentLevel === index) : (index === -1);
+        
+        div.innerHTML = `
+            <span>${label}</span>
+            ${isSelected ? '<i data-feather="check" style="width:16px; color:var(--primary-color)"></i>' : ''}
+        `;
+        
+        div.onclick = () => {
+            if (hls) {
+                hls.currentLevel = index;
+                // إعادة رسم القائمة لتحديث علامة الصح
+                // ملاحظة: قد تحتاج لاستدعاء updateQualityMenu مرة أخرى أو تحديث الـ DOM يدوياً
+                // هنا سنقوم بإغلاق القائمة وعرض رسالة
+                showToast(`تم التغيير إلى: ${label}`);
+            }
+            settingsMenu.style.display = 'none';
+        };
+        container.appendChild(div);
+        feather.replace();
+    }
+
+    // --- مستمعات الأحداث (Event Listeners) ---
+
+    // التفاعل مع الشاشة لإظهار التحكم
+    document.body.addEventListener('mousemove', showControls);
+    document.body.addEventListener('touchstart', showControls);
+    document.body.addEventListener('click', (e) => {
+        // إخفاء القائمة عند النقر خارجها
+        if (settingsMenu.style.display === 'block' && !settingsMenu.contains(e.target) && !settingsBtn.contains(e.target)) {
+            settingsMenu.style.display = 'none';
+        }
+        showControls();
+    });
+
+    // زر التشغيل/الإيقاف
+    playBtn.onclick = () => {
+        if (video.paused) video.play();
+        else video.pause();
+    };
+
+    // زر التشغيل الكبير في الوسط
+    centerPlayBtn.onclick = () => {
+        video.muted = false; // إلغاء كتم الصوت عند النقر اليدوي
+        video.play();
+        centerPlayBtn.style.display = 'none';
+    };
+
+    // زر الصوت
+    muteBtn.onclick = () => {
+        video.muted = !video.muted;
+        updateMuteIcon();
+    };
+
+    // زر ملء الشاشة
+    fullscreenBtn.onclick = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.log(e));
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+    };
+
+    // زر الإعدادات
+    settingsBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (settingsMenu.style.display === 'block') {
+            settingsMenu.style.display = 'none';
+        } else {
+            // تحديث علامة الصح قبل العرض
+            if(hls) updateQualityMenu(hls.levels); 
+            settingsMenu.style.display = 'block';
+        }
+    };
+
+    // تحديث الأيقونات عند تغير حالة الفيديو
+    video.addEventListener('play', () => { updatePlayIcon(); centerPlayBtn.style.display = 'none'; });
+    video.addEventListener('pause', updatePlayIcon);
+    video.addEventListener('volumechange', updateMuteIcon);
+    
+    // التعامل مع حالة الانتظار (Buffering)
+    video.addEventListener('waiting', () => loading.style.display = 'block');
+    video.addEventListener('playing', () => loading.style.display = 'none');
+
+    // تشغيل الأيقونات عند البدء
+    feather.replace();
+
 </script>
 </body>
 </html>
+
