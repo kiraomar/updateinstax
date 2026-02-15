@@ -6,21 +6,19 @@
 <meta name="referrer" content="no-referrer">
 <title>Video Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root { --primary-color:#ffc107; }
 body,html{
     margin:0;
     padding:0;
-    overflow:hidden;
     background:#000;
     height:100%;
     width:100%;
+    overflow:hidden;
     font-family:sans-serif;
 }
-#video-container{
+#container{
     position:relative;
     width:100%;
     height:100%;
@@ -33,157 +31,91 @@ video{
     height:100%;
     object-fit:contain;
 }
-#loading-spinner{
+#loading{
+    position:absolute;
     width:50px;
     height:50px;
     border:4px solid rgba(255,255,255,0.3);
-    border-top-color:var(--primary-color);
+    border-top-color:#ffc107;
     border-radius:50%;
-    position:absolute;
     animation:spin 1s linear infinite;
-    z-index:10;
 }
 @keyframes spin{
     to{transform:rotate(360deg)}
 }
-#error-msg{
+#error{
     position:absolute;
     color:#ff6b6b;
     background:rgba(0,0,0,0.8);
-    padding:20px;
-    border-radius:10px;
+    padding:15px;
+    border-radius:8px;
     display:none;
-    text-align:center;
-    z-index:100;
 }
 </style>
 </head>
 <body>
 
-<div id="video-container">
-    <div id="loading-spinner"></div>
-    <div id="error-msg">حدث خطأ في التشغيل</div>
-    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
+<div id="container">
+    <div id="loading"></div>
+    <div id="error">فشل تشغيل القناة</div>
+    <video id="video" autoplay muted playsinline></video>
 </div>
 
 <script>
 
-const urlParams = new URLSearchParams(window.location.search);
-let streamUrl = urlParams.get('url');
+const params = new URLSearchParams(window.location.search);
+const streamUrl = params.get("url");
 
-if(streamUrl){
-    streamUrl = decodeURIComponent(streamUrl);
-}
+const video = document.getElementById("video");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
 
-const video = document.getElementById('video');
-const loading = document.getElementById('loading-spinner');
-const errorMsg = document.getElementById('error-msg');
-
-const corsProxy = "https://test.omao18193.workers.dev/";
-
-let hls = null;
-
-function showError(msg){
+function showError(){
     loading.style.display = "none";
-    errorMsg.style.display = "block";
-    errorMsg.textContent = msg;
+    errorBox.style.display = "block";
 }
 
-function buildFinalUrl(url){
-
-    if(!url) return null;
-
-    // إذا الرابط أصلاً من الوركر لا تعيد تغليفه
-    if(url.startsWith(corsProxy)){
-        return url;
-    }
-
-    return corsProxy + "?url=" + encodeURIComponent(url);
-}
-
-function initPlayer(){
-
-    if(!streamUrl){
-        showError("لم يتم العثور على رابط القناة");
-        return;
-    }
-
-    const finalUrl = buildFinalUrl(streamUrl);
-
-    console.log("Final Stream URL:", finalUrl);
+if(!streamUrl){
+    showError();
+}else{
 
     if(Hls.isSupported()){
 
-        hls = new Hls({
+        const hls = new Hls({
             enableWorker:true,
-            lowLatencyMode:false,
-            backBufferLength:90,
             maxBufferLength:60,
-            maxMaxBufferLength:120,
-            manifestLoadingTimeOut:20000,
-            fragLoadingTimeOut:30000,
-            levelLoadingTimeOut:20000,
-            manifestLoadingMaxRetry:4,
-            fragLoadingMaxRetry:6,
+            backBufferLength:90
         });
 
+        hls.loadSource(streamUrl);
         hls.attachMedia(video);
 
-        hls.on(Hls.Events.MEDIA_ATTACHED,function(){
-            hls.loadSource(finalUrl);
-        });
-
-        hls.on(Hls.Events.MANIFEST_PARSED,function(){
+        hls.on(Hls.Events.MANIFEST_PARSED, function(){
             video.play().then(()=>{
                 loading.style.display="none";
             }).catch(()=>{
-                video.muted=true;
+                video.muted = true;
                 video.play();
                 loading.style.display="none";
             });
         });
 
-        hls.on(Hls.Events.ERROR,function(event,data){
-
+        hls.on(Hls.Events.ERROR, function(event,data){
             if(data.fatal){
-
-                switch(data.type){
-
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.log("Network error → retrying...");
-                        hls.startLoad();
-                        break;
-
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log("Media error → recovering...");
-                        hls.recoverMediaError();
-                        break;
-
-                    default:
-                        console.log("Fatal error → destroying");
-                        hls.destroy();
-                        showError("فشل تشغيل القناة");
-                        break;
-                }
+                showError();
             }
         });
 
-    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
-
-        video.src = finalUrl;
-
-        video.addEventListener('loadedmetadata',()=>{
+    }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+        video.src = streamUrl;
+        video.addEventListener("loadedmetadata", ()=>{
             video.play();
             loading.style.display="none";
         });
-
-        video.addEventListener('error',()=>{
-            showError("فشل تشغيل القناة");
-        });
+    }else{
+        showError();
     }
 }
-
-initPlayer();
 
 </script>
 </body>
