@@ -1,0 +1,8 @@
+#EXTM3U
+#EXT-X-VERSION:3
+
+#EXT-X-STREAM-INF:BANDWIDTH=3500000,RESOLUTION=1280x720
+https://watch.ozcartv.xyz/assets/res2/java2/1361.css?x=/hls/
+
+#EXT-X-STREAM-INF:BANDWIDTH=1800000,RESOLUTION=854x480
+https://watch.ozcartv.xyz/assets/res2/java2/1358.css?x=/hls/
